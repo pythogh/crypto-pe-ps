@@ -22,21 +22,20 @@
       --green-bg:  #F2F7F4;
       --red:       #8B3A3A;
       --border:    1px solid var(--parchment);
-      --r:         6px;
       --serif:     'EB Garamond', Georgia, serif;
       --mono:      'DM Mono', monospace;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       background: var(--cream);
       color: var(--ink);
       font-family: var(--serif);
       padding: 36px 28px 60px;
-      max-width: 960px;
+      max-width: 1000px;
       margin: 0 auto;
     }
 
-    /* Header */
     header {
       display: flex;
       justify-content: space-between;
@@ -49,37 +48,34 @@
     .logo em { color: var(--orange); font-style: normal; }
     #updated { font-family: var(--mono); font-size: 11px; color: var(--sand); }
 
-    /* Loading */
     #loading {
       font-family: var(--mono);
       font-size: 12px;
       color: var(--sienna);
-      padding: 40px 0;
+      padding: 60px 0;
       text-align: center;
     }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     #loading { animation: pulse 1.4s ease-in-out infinite; }
 
-    /* Table */
+    /* ── Table ── */
     #tbl-wrap { display: none; }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
     thead th {
       font-family: var(--mono);
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: .08em;
       color: var(--sienna);
-      padding: 0 12px 10px;
+      padding: 0 10px 12px;
       text-align: right;
       border-bottom: var(--border);
       font-weight: 400;
+      white-space: nowrap;
     }
-    thead th:first-child,
+    thead th:first-child { width: 32px; }
     thead th:nth-child(2) { text-align: left; }
 
     tbody tr.coin-row {
@@ -90,139 +86,85 @@
     tbody tr.coin-row:hover { background: var(--cream2); }
     tbody tr.coin-row.open  { background: var(--cream2); }
 
-    tbody td {
-      padding: 13px 12px;
-      vertical-align: middle;
-    }
+    tbody td { padding: 12px 10px; vertical-align: middle; }
 
-    /* Expand toggle */
-    td.td-toggle {
-      width: 32px;
-      text-align: center;
-    }
+    /* Toggle */
+    td.td-toggle { width: 32px; text-align: center; }
     .toggle-btn {
-      width: 22px; height: 22px;
+      width: 20px; height: 20px;
       border: var(--border);
       border-radius: 4px;
       background: var(--white);
       color: var(--sienna);
-      font-size: 16px;
-      line-height: 20px;
+      font-size: 15px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      transition: transform .2s, background .15s;
+      transition: transform .2s;
       user-select: none;
-    }
-    tr.open .toggle-btn {
-      transform: rotate(45deg);
-      background: var(--cream2);
-    }
-
-    /* Logo + name */
-    td.td-name {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 140px;
-    }
-    .coin-logo {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .coin-name { font-weight: 500; font-size: 15px; }
-    .coin-sym  {
       font-family: var(--mono);
-      font-size: 10px;
-      color: var(--sienna);
-      letter-spacing: .05em;
     }
+    tr.open .toggle-btn { transform: rotate(45deg); }
 
-    /* Numeric cells */
+    /* Name cell */
+    td.td-name { display: flex; align-items: center; gap: 10px; }
+    .coin-logo { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; background: var(--cream2); }
+    .coin-name { font-weight: 500; font-size: 15px; line-height: 1.2; }
+    .coin-sym  { font-family: var(--mono); font-size: 10px; color: var(--sienna); letter-spacing: .05em; }
+
+    /* Numeric */
     td.num { text-align: right; font-variant-numeric: tabular-nums; }
     td.pos { color: var(--green); font-family: var(--mono); font-size: 12px; text-align: right; }
     td.neg { color: var(--red);   font-family: var(--mono); font-size: 12px; text-align: right; }
-
+    td.na  { color: var(--sand);  font-family: var(--mono); font-size: 11px; text-align: right; }
     .pe-val  { color: var(--orange); font-weight: 500; }
     .fdv-val { color: var(--green);  font-weight: 500; }
-    .na      { color: var(--sand); font-family: var(--mono); font-size: 11px; }
 
-    /* Expanded panel */
-    tr.detail-row td {
+    /* ── Expanded panel ── */
+    tr.detail-row > td {
       padding: 0;
       background: var(--white);
-      border-bottom: var(--border);
+      border-bottom: 2px solid var(--parchment);
     }
     .detail-panel {
       display: none;
-      padding: 24px 28px 28px;
-      gap: 24px;
+      flex-direction: column;
+      gap: 20px;
+      padding: 20px 24px 24px;
     }
-    tr.detail-row.open .detail-panel { display: flex; flex-wrap: wrap; }
+    tr.detail-row.open .detail-panel { display: flex; }
 
-    /* Metric pills inside panel */
-    .metrics-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      width: 100%;
-      margin-bottom: 8px;
-    }
+    /* Pills */
+    .pills { display: flex; gap: 10px; flex-wrap: wrap; }
     .pill {
       background: var(--cream);
       border: var(--border);
-      border-radius: var(--r);
+      border-radius: 6px;
       padding: 10px 14px;
-      min-width: 110px;
+      min-width: 100px;
     }
     .pill.pe-pill  { border-color: #E8C4A0; background: var(--orange-bg); }
     .pill.fdv-pill { border-color: #B8D4C4; background: var(--green-bg); }
     .pill .plbl {
-      font-family: var(--mono);
-      font-size: 9px;
-      color: var(--sienna);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      margin-bottom: 4px;
+      font-family: var(--mono); font-size: 9px; color: var(--sienna);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px;
     }
-    .pill .pval {
-      font-size: 18px;
-      font-weight: 500;
-      letter-spacing: -.02em;
-    }
+    .pill .pval { font-size: 18px; font-weight: 500; letter-spacing: -.02em; }
     .pill.pe-pill  .pval { color: var(--orange); }
     .pill.fdv-pill .pval { color: var(--green); }
-    .pill .psub {
-      font-family: var(--mono);
-      font-size: 9px;
-      color: var(--sand);
-      margin-top: 3px;
-    }
+    .pill .psub { font-family: var(--mono); font-size: 9px; color: var(--sand); margin-top: 3px; }
 
     /* Chart */
-    .chart-container {
-      width: 100%;
-      height: 220px;
-      position: relative;
-    }
     .chart-lbl {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--sienna);
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      margin-bottom: 10px;
+      font-family: var(--mono); font-size: 10px; color: var(--sienna);
+      text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px;
     }
+    .chart-wrap { position: relative; height: 200px; }
 
     footer {
-      margin-top: 44px;
-      padding-top: 14px;
-      border-top: var(--border);
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--sand);
+      margin-top: 44px; padding-top: 14px; border-top: var(--border);
+      font-family: var(--mono); font-size: 10px; color: var(--sand);
     }
   </style>
 </head>
@@ -233,14 +175,14 @@
   <div id="updated">Chargement…</div>
 </header>
 
-<div id="loading">Chargement des données…</div>
+<div id="loading">Récupération des données…</div>
 
 <div id="tbl-wrap">
-  <table id="main-table">
+  <table>
     <thead>
       <tr>
         <th></th>
-        <th>Protocole</th>
+        <th style="text-align:left">Protocole</th>
         <th>Prix</th>
         <th>24h</th>
         <th>Mcap</th>
@@ -258,52 +200,50 @@
 <footer>Data : CoinGecko · DefiLlama — à titre informatif uniquement</footer>
 
 <script>
-// ── Liste des coins ───────────────────────────────────────────────────────────
 const COINS = [
-  // cgId = ID exact sur coingecko.com/en/coins/<ID>
-  // llamaSlug = slug sur defillama.com/protocol/<slug>
-  { cgId: 'hyperliquid',           llamaSlug: 'hyperliquid'   },
-  { cgId: 'pump-fun',              llamaSlug: 'pump-fun'      },
-  { cgId: 'aave',                  llamaSlug: 'aave'          },
-  { cgId: 'sky',                   llamaSlug: 'sky'           },
-  { cgId: 'derive',                llamaSlug: 'derive'        },
-  { cgId: 'kinetiq',               llamaSlug: 'kinetiq'       },
-  { cgId: 'maple-finance',         llamaSlug: 'maple-finance' },
-  { cgId: 'pendle',                llamaSlug: 'pendle'        },
-  { cgId: 'jupiter-exchange-solana', llamaSlug: 'jupiter'     },
-  { cgId: 'lighter-2',             llamaSlug: 'lighter'       },
+  { cgId: 'hyperliquid',             llamaSlug: 'hyperliquid'   },
+  { cgId: 'pump-fun',                llamaSlug: 'pump-fun'      },
+  { cgId: 'aave',                    llamaSlug: 'aave'          },
+  { cgId: 'sky',                     llamaSlug: 'sky'           },
+  { cgId: 'derive',                  llamaSlug: 'derive'        },
+  { cgId: 'kinetiq',                 llamaSlug: 'kinetiq'       },
+  { cgId: 'maple-finance',           llamaSlug: 'maple-finance' },
+  { cgId: 'pendle',                  llamaSlug: 'pendle'        },
+  { cgId: 'jupiter-exchange-solana', llamaSlug: 'jupiter'       },
+  { cgId: 'lighter-2',               llamaSlug: 'lighter'       },
 ];
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 function fmt(n) {
-  if (n == null || isNaN(n)) return '<span class="na">—</span>';
+  if (n == null || isNaN(n) || n === 0) return null;
   const a = Math.abs(n);
   if (a >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
-  if (a >= 1e9)  return '$' + (n/1e9).toFixed(2) + 'B';
-  if (a >= 1e6)  return '$' + (n/1e6).toFixed(2) + 'M';
-  if (a >= 1e3)  return '$' + (n/1e3).toFixed(1) + 'K';
+  if (a >= 1e9)  return '$' + (n/1e9).toFixed(2)  + 'B';
+  if (a >= 1e6)  return '$' + (n/1e6).toFixed(2)  + 'M';
+  if (a >= 1e3)  return '$' + (n/1e3).toFixed(1)  + 'K';
   return '$' + n.toFixed(2);
 }
 function fmtP(n) {
-  if (n == null) return '<span class="na">—</span>';
+  if (n == null) return null;
   if (n >= 1000) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
   if (n >= 1)    return '$' + n.toFixed(2);
   return '$' + n.toPrecision(4);
 }
-function fmtPe(n) {
-  if (n == null || !isFinite(n)) return '<span class="na">N/A</span>';
-  return n.toFixed(1) + 'x';
+function cell(val, cls = 'num') {
+  return val
+    ? `<td class="${cls}">${val}</td>`
+    : `<td class="na">—</td>`;
 }
 
-// ── Chart registry (destroy avant recréer) ────────────────────────────────────
+// ── Chart registry ────────────────────────────────────────────────────────────
 const charts = {};
+function buildChart(id, prices, revData, mcap) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  const canvas = document.getElementById(id);
+  if (!canvas || !prices?.length) return;
 
-function buildChart(canvasId, prices, revData, mcap) {
-  if (charts[canvasId]) { charts[canvasId].destroy(); delete charts[canvasId]; }
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-
-  const labels   = prices.map(([ts]) => new Date(ts).toLocaleDateString('fr-FR', { day:'numeric', month:'short' }));
+  const labels   = prices.map(([ts]) =>
+    new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }));
   const priceArr = prices.map(([, p]) => p);
 
   const datasets = [{
@@ -316,18 +256,18 @@ function buildChart(canvasId, prices, revData, mcap) {
   }];
 
   if (revData?.revAnn > 0 && mcap) {
-    const pNow = priceArr[priceArr.length - 1];
+    const pNow = priceArr[priceArr.length - 1] || 1;
     datasets.push({
       label: 'P/E',
       data: priceArr.map(p => +((mcap * (p / pNow)) / revData.revAnn).toFixed(2)),
       yAxisID: 'yPE',
       borderColor: '#3D6B4F',
       backgroundColor: 'transparent',
-      borderWidth: 1.5, borderDash: [5,3], pointRadius: 0, tension: 0.35, fill: false,
+      borderWidth: 1.5, borderDash: [4, 3], pointRadius: 0, tension: 0.35,
     });
   }
 
-  charts[canvasId] = new Chart(canvas.getContext('2d'), {
+  charts[id] = new Chart(canvas.getContext('2d'), {
     type: 'line',
     data: { labels, datasets },
     options: {
@@ -342,7 +282,7 @@ function buildChart(canvasId, prices, revData, mcap) {
           padding: 10,
           callbacks: {
             label: c => c.dataset.label === 'Prix'
-              ? ' Prix : ' + (c.parsed.y >= 1 ? '$'+c.parsed.y.toFixed(2) : '$'+c.parsed.y.toPrecision(4))
+              ? ' Prix : ' + (fmtP(c.parsed.y) || '—')
               : ' P/E : '  + c.parsed.y.toFixed(1) + 'x',
           },
         },
@@ -356,164 +296,130 @@ function buildChart(canvasId, prices, revData, mcap) {
           position: 'left',
           grid: { color: 'rgba(180,160,130,0.1)' },
           ticks: { font: { family:"'DM Mono',monospace", size:9 }, color:'#C96B2F',
-            callback: v => v >= 1 ? '$'+v.toFixed(2) : '$'+v.toPrecision(3) },
+            callback: v => fmtP(v) || '' },
         },
         yPE: {
-          position: 'right',
-          grid: { display: false },
+          position: 'right', grid: { display: false },
           ticks: { font: { family:"'DM Mono',monospace", size:9 }, color:'#3D6B4F',
-            callback: v => v.toFixed(0)+'x' },
+            callback: v => v.toFixed(0) + 'x' },
         },
       },
     },
   });
 }
 
-// ── Render table row ──────────────────────────────────────────────────────────
+// ── Render ────────────────────────────────────────────────────────────────────
 function renderRow(d, idx) {
-  const tbody = document.getElementById('tbody');
-
-  const pe   = d.rev?.revAnn > 0 && d.mcap ? d.mcap / d.rev.revAnn : null;
-  const fdve = d.rev?.revAnn > 0 && d.fdv  ? d.fdv  / d.rev.revAnn : null;
-  const chg  = d.change24h;
-  const chgHtml = chg != null
-    ? `<td class="${chg>=0?'pos':'neg'}">${chg>=0?'+':''}${chg.toFixed(2)}%</td>`
-    : `<td class="na num">—</td>`;
-
-  const canvasId = `chart-${idx}`;
+  const tbody    = document.getElementById('tbody');
+  const pe       = d.rev?.revAnn > 0 && d.mcap ? d.mcap / d.rev.revAnn : null;
+  const fdve     = d.rev?.revAnn > 0 && d.fdv  ? d.fdv  / d.rev.revAnn : null;
+  const chg      = d.change24h;
+  const canvasId = 'c' + idx;
 
   // ── Coin row ──
   const tr = document.createElement('tr');
   tr.className = 'coin-row';
-  tr.dataset.idx = idx;
   tr.innerHTML = `
     <td class="td-toggle"><span class="toggle-btn">+</span></td>
     <td class="td-name">
-      <img class="coin-logo" src="${d.logo||''}" alt="" />
-      <div>
-        <div class="coin-name">${d.name}</div>
-        <div class="coin-sym">${d.symbol}</div>
-      </div>
+      <img class="coin-logo" src="${d.logo || ''}" alt="" />
+      <div><div class="coin-name">${d.name}</div><div class="coin-sym">${d.symbol}</div></div>
     </td>
-    <td class="num">${fmtP(d.price)}</td>
-    ${chgHtml}
-    <td class="num">${fmt(d.mcap)}</td>
-    <td class="num">${fmt(d.fdv)}</td>
-    <td class="num">${fmt(d.rev?.rev30d)}</td>
-    <td class="num">${fmt(d.rev?.revAnn)}</td>
-    <td class="num pe-val">${fmtPe(pe)}</td>
-    <td class="num fdv-val">${fmtPe(fdve)}</td>
+    ${cell(fmtP(d.price))}
+    <td class="${chg == null ? 'na' : chg >= 0 ? 'pos' : 'neg'}">${chg == null ? '—' : (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%'}</td>
+    ${cell(fmt(d.mcap))}
+    ${cell(fmt(d.fdv))}
+    ${cell(fmt(d.rev?.rev30d))}
+    ${cell(fmt(d.rev?.revAnn))}
+    ${pe   != null ? `<td class="num pe-val">${pe.toFixed(1)}x</td>`   : `<td class="na">—</td>`}
+    ${fdve != null ? `<td class="num fdv-val">${fdve.toFixed(1)}x</td>` : `<td class="na">—</td>`}
   `;
   tbody.appendChild(tr);
 
   // ── Detail row ──
-  const trDetail = document.createElement('tr');
-  trDetail.className = 'detail-row';
-  trDetail.innerHTML = `<td colspan="10">
-    <div class="detail-panel">
-      <div class="metrics-row">
-        <div class="pill">
-          <div class="plbl">Prix</div>
-          <div class="pval">${fmtP(d.price).replace('<span class="na">—</span>','—')}</div>
-          <div class="psub">${chg!=null?(chg>=0?'+':'')+chg.toFixed(2)+'% (24h)':'—'}</div>
-        </div>
-        <div class="pill">
-          <div class="plbl">Market Cap</div>
-          <div class="pval">${fmt(d.mcap).replace(/<[^>]+>/g,'')}</div>
-          <div class="psub">circulating supply</div>
-        </div>
-        <div class="pill">
-          <div class="plbl">FDV</div>
-          <div class="pval">${fmt(d.fdv).replace(/<[^>]+>/g,'')}</div>
-          <div class="psub">fully diluted</div>
-        </div>
-        <div class="pill">
-          <div class="plbl">Rev. 30j</div>
-          <div class="pval">${fmt(d.rev?.rev30d).replace(/<[^>]+>/g,'')||'N/A'}</div>
-          <div class="psub">7j : ${fmt(d.rev?.rev7d).replace(/<[^>]+>/g,'')||'—'}</div>
-        </div>
-        <div class="pill">
-          <div class="plbl">Rev. annualisé</div>
-          <div class="pval">${fmt(d.rev?.revAnn).replace(/<[^>]+>/g,'')||'N/A'}</div>
-          <div class="psub">30j × 12.17</div>
-        </div>
-        <div class="pill pe-pill">
-          <div class="plbl">P/E</div>
-          <div class="pval">${pe!=null?pe.toFixed(1)+'x':'N/A'}</div>
-          <div class="psub">mcap / rev ann.</div>
-        </div>
-        <div class="pill fdv-pill">
-          <div class="plbl">FDV/E</div>
-          <div class="pval">${fdve!=null?fdve.toFixed(1)+'x':'N/A'}</div>
-          <div class="psub">fdv / rev ann.</div>
-        </div>
+  const tr2 = document.createElement('tr');
+  tr2.className = 'detail-row';
+  tr2.innerHTML = `<td colspan="10"><div class="detail-panel">
+    <div class="pills">
+      <div class="pill">
+        <div class="plbl">Prix</div>
+        <div class="pval">${fmtP(d.price) || '—'}</div>
+        <div class="psub">${chg != null ? (chg >= 0 ? '+' : '') + chg.toFixed(2) + '% (24h)' : '—'}</div>
       </div>
-      <div style="width:100%">
-        <div class="chart-lbl">Prix &amp; P/E — 30 jours</div>
-        <div class="chart-container">
-          <canvas id="${canvasId}"></canvas>
-        </div>
+      <div class="pill">
+        <div class="plbl">Market Cap</div>
+        <div class="pval">${fmt(d.mcap) || '—'}</div>
+        <div class="psub">circulating supply</div>
+      </div>
+      <div class="pill">
+        <div class="plbl">FDV</div>
+        <div class="pval">${fmt(d.fdv) || '—'}</div>
+        <div class="psub">fully diluted</div>
+      </div>
+      <div class="pill">
+        <div class="plbl">Rev. 30 jours</div>
+        <div class="pval">${fmt(d.rev?.rev30d) || 'N/A'}</div>
+        <div class="psub">7j : ${fmt(d.rev?.rev7d) || '—'}</div>
+      </div>
+      <div class="pill">
+        <div class="plbl">Rev. annualisé</div>
+        <div class="pval">${fmt(d.rev?.revAnn) || 'N/A'}</div>
+        <div class="psub">30j × 12.17</div>
+      </div>
+      <div class="pill pe-pill">
+        <div class="plbl">P/E</div>
+        <div class="pval">${pe != null ? pe.toFixed(1) + 'x' : 'N/A'}</div>
+        <div class="psub">mcap / rev ann.</div>
+      </div>
+      <div class="pill fdv-pill">
+        <div class="plbl">FDV/E</div>
+        <div class="pval">${fdve != null ? fdve.toFixed(1) + 'x' : 'N/A'}</div>
+        <div class="psub">fdv / rev ann.</div>
       </div>
     </div>
-  </td>`;
-  tbody.appendChild(trDetail);
+    <div>
+      <div class="chart-lbl">Prix &amp; P/E — 30 jours
+        <span style="margin-left:12px;color:var(--orange)">── prix</span>
+        <span style="margin-left:8px;color:var(--green)">╌╌ p/e</span>
+      </div>
+      <div class="chart-wrap"><canvas id="${canvasId}"></canvas></div>
+    </div>
+  </div></td>`;
+  tbody.appendChild(tr2);
 
-  // ── Toggle ──
   tr.addEventListener('click', () => {
-    const isOpen = tr.classList.contains('open');
-    tr.classList.toggle('open', !isOpen);
-    trDetail.classList.toggle('open', !isOpen);
-    if (!isOpen && d.prices?.length) {
-      // Petit délai pour que le panel soit visible avant de dessiner
-      setTimeout(() => buildChart(canvasId, d.prices, d.rev, d.mcap), 30);
-    }
+    const open = tr.classList.toggle('open');
+    tr2.classList.toggle('open', open);
+    if (open) setTimeout(() => buildChart(canvasId, d.prices, d.rev, d.mcap), 20);
   });
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   const loadEl = document.getElementById('loading');
   try {
-    loadEl.textContent = 'Connexion au serveur…';
     const res = await fetch('/api/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(COINS),
     });
-
-    if (!res.ok) {
-      throw new Error('Serveur HTTP ' + res.status + ' — ' + await res.text());
-    }
-
+    if (!res.ok) throw new Error('Serveur HTTP ' + res.status);
     const data = await res.json();
-    loadEl.textContent = 'Rendu du tableau…';
 
-    let rendered = 0;
+    let ok = 0;
     data.forEach((d, i) => {
-      if (d.error) {
-        console.warn('[' + d.cgId + '] Erreur CoinGecko:', d.error);
-      } else {
-        renderRow(d, i);
-        rendered++;
-      }
+      if (!d.error) { renderRow(d, i); ok++; }
+      else console.warn('[' + d.cgId + ']', d.error);
     });
 
     loadEl.style.display = 'none';
     document.getElementById('tbl-wrap').style.display = 'block';
     document.getElementById('updated').textContent =
-      rendered + '/' + COINS.length + ' coins · ' + new Date().toLocaleTimeString('fr-FR');
+      ok + '/' + COINS.length + ' coins · ' + new Date().toLocaleTimeString('fr-FR');
 
-    if (rendered === 0) {
-      loadEl.style.display = 'block';
-      loadEl.style.animation = 'none';
-      loadEl.style.color = '#8B3A3A';
-      loadEl.textContent = '⚠️ Aucun coin chargé. Vérifie la console (F12) pour les erreurs.';
-    }
-
-  } catch (e) {
-    loadEl.style.animation = 'none';
-    loadEl.style.color = '#8B3A3A';
-    loadEl.textContent = '❌ Erreur : ' + e.message;
+  } catch(e) {
+    loadEl.style.cssText = 'animation:none;color:#8B3A3A;padding:60px 0;text-align:center;font-family:var(--mono);font-size:12px';
+    loadEl.textContent = '❌ ' + e.message;
     console.error(e);
   }
 }
