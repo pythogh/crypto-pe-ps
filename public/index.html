@@ -517,9 +517,9 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
       pointRadius: 0, tension: 0.35, spanGaps: true };
   });
 
-  const isRevType  = metric === 'rev30d';
-  const tickCb = isRev ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
-  const ttCb   = isRev ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
+  const isRevFlag = metric === 'rev30d';
+  const tickCb = isRevFlag ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
+  const ttCb   = isRevFlag ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
 
   // Update existing chart if possible — avoids flicker and DOM issues
   if (existingChart) {
@@ -548,9 +548,9 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
 
   if (!active.length) return null;
 
-  const isRev = metric === 'rev30d';
-  const tickCb = isRev ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
-  const ttCb   = isRev ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
+  const isRevFlag = metric === 'rev30d';
+  const tickCb = isRevFlag ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
+  const ttCb   = isRevFlag ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
 
   const allLabels = active.reduce((best, d) => {
     const { labels } = getMetricSeries(d, metric, globalDays);
