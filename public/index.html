@@ -260,16 +260,18 @@
 <script>
 // ── Liste des coins ───────────────────────────────────────────────────────────
 const COINS = [
-  { cgId: 'hyperliquid',    llamaSlug: 'hyperliquid' },
-  { cgId: 'pump-fun',       llamaSlug: 'pump-fun'    },
-  { cgId: 'aave',           llamaSlug: 'aave'        },
-  { cgId: 'sky',            llamaSlug: 'sky'         },
-  { cgId: 'derive',         llamaSlug: 'derive'      },
-  { cgId: 'kinetiq',        llamaSlug: 'kinetiq'     },
-  { cgId: 'maple-finance',  llamaSlug: 'maple'       },
-  { cgId: 'pendle',         llamaSlug: 'pendle'      },
-  { cgId: 'jupiter-ag',     llamaSlug: 'jupiter'     },
-  { cgId: 'lighter-2',      llamaSlug: 'lighter'     },
+  // cgId = ID exact sur coingecko.com/en/coins/<ID>
+  // llamaSlug = slug sur defillama.com/protocol/<slug>
+  { cgId: 'hyperliquid',           llamaSlug: 'hyperliquid'   },
+  { cgId: 'pump-fun',              llamaSlug: 'pump-fun'      },
+  { cgId: 'aave',                  llamaSlug: 'aave'          },
+  { cgId: 'sky',                   llamaSlug: 'sky'           },
+  { cgId: 'derive',                llamaSlug: 'derive'        },
+  { cgId: 'kinetiq',               llamaSlug: 'kinetiq'       },
+  { cgId: 'maple-finance',         llamaSlug: 'maple-finance' },
+  { cgId: 'pendle',                llamaSlug: 'pendle'        },
+  { cgId: 'jupiter-exchange-solana', llamaSlug: 'jupiter'     },
+  { cgId: 'lighter-2',             llamaSlug: 'lighter'       },
 ];
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -470,24 +472,49 @@ function renderRow(d, idx) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function init() {
+  const loadEl = document.getElementById('loading');
   try {
-    const res  = await fetch('/api/batch', {
+    loadEl.textContent = 'Connexion au serveur…';
+    const res = await fetch('/api/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(COINS),
     });
-    const data = await res.json();
 
+    if (!res.ok) {
+      throw new Error('Serveur HTTP ' + res.status + ' — ' + await res.text());
+    }
+
+    const data = await res.json();
+    loadEl.textContent = 'Rendu du tableau…';
+
+    let rendered = 0;
     data.forEach((d, i) => {
-      if (!d.error) renderRow(d, i);
+      if (d.error) {
+        console.warn('[' + d.cgId + '] Erreur CoinGecko:', d.error);
+      } else {
+        renderRow(d, i);
+        rendered++;
+      }
     });
 
-    document.getElementById('loading').style.display = 'none';
+    loadEl.style.display = 'none';
     document.getElementById('tbl-wrap').style.display = 'block';
     document.getElementById('updated').textContent =
-      'Mis à jour ' + new Date().toLocaleTimeString('fr-FR');
+      rendered + '/' + COINS.length + ' coins · ' + new Date().toLocaleTimeString('fr-FR');
+
+    if (rendered === 0) {
+      loadEl.style.display = 'block';
+      loadEl.style.animation = 'none';
+      loadEl.style.color = '#8B3A3A';
+      loadEl.textContent = '⚠️ Aucun coin chargé. Vérifie la console (F12) pour les erreurs.';
+    }
+
   } catch (e) {
-    document.getElementById('loading').textContent = 'Erreur : ' + e.message;
+    loadEl.style.animation = 'none';
+    loadEl.style.color = '#8B3A3A';
+    loadEl.textContent = '❌ Erreur : ' + e.message;
+    console.error(e);
   }
 }
 
