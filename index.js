@@ -9,30 +9,44 @@ const LL_BASE = 'https://api.llama.fi';
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-async function fetchJSON(url, headers = {}) {
+// ── Fetch avec timeout ────────────────────────────────────────────────────────
+async function fetchJSON(url, headers = {}, timeoutMs = 10000) {
   const { default: fetch } = await import('node-fetch');
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { headers, signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
+    return res.json();
+  } catch(e) {
+    clearTimeout(timer);
+    throw e;
+  }
 }
 
 const CG_H = { 'x-cg-demo-api-key': CG_KEY };
 
-// Batch route — charge tous les coins d'un coup
+// ── Batch : charge tous les coins ─────────────────────────────────────────────
 app.post('/api/batch', async (req, res) => {
   const coins = req.body;
+  console.log(`[batch] Chargement de ${coins.length} coins…`);
+
   const results = await Promise.all(coins.map(async ({ cgId, llamaSlug }) => {
     try {
+      // CoinGecko : infos + historique prix (parallèle)
       const [coin, chart] = await Promise.all([
         fetchJSON(`${CG_BASE}/coins/${cgId}?localization=false&tickers=false&community_data=false&developer_data=false`, CG_H),
         fetchJSON(`${CG_BASE}/coins/${cgId}/market_chart?vs_currency=usd&days=30&interval=daily`, CG_H),
       ]);
+      console.log(`[CG ✅] ${cgId}`);
 
+      // DefiLlama : revenue (optionnel, ne fait pas planter le reste)
       let revData = null;
+      const slug = llamaSlug || cgId;
       try {
-        const slug   = llamaSlug || cgId;
-        const dData  = await fetchJSON(`${LL_BASE}/summary/fees/${slug}?dataType=dailyRevenue`);
-        const last30 = (dData.totalDataChart || []).slice(-30);
+        const d = await fetchJSON(`${LL_BASE}/summary/fees/${slug}?dataType=dailyRevenue`);
+        const last30 = (d.totalDataChart || []).slice(-30);
         const rev30d = last30.reduce((s, [, v]) => s + (v || 0), 0);
         revData = {
           rev30d,
@@ -40,7 +54,10 @@ app.post('/api/batch', async (req, res) => {
           revAnn:  rev30d * (365 / 30),
           history: last30.map(([ts, v]) => ({ ts: ts * 1000, v: v || 0 })),
         };
-      } catch (_) {}
+        console.log(`[LL ✅] ${slug} — rev30d: $${Math.round(revData.rev30d).toLocaleString()}`);
+      } catch(llamaErr) {
+        console.warn(`[LL ⚠️] ${slug} — ${llamaErr.message}`);
+      }
 
       return {
         cgId,
@@ -56,11 +73,16 @@ app.post('/api/batch', async (req, res) => {
         error:     null,
       };
     } catch (e) {
+      console.error(`[CG ❌] ${cgId} — ${e.message}`);
       return { cgId, error: e.message };
     }
   }));
+
+  const ok  = results.filter(r => !r.error).length;
+  const err = results.filter(r =>  r.error).length;
+  console.log(`[batch] Terminé : ${ok} ok, ${err} erreurs`);
   res.json(results);
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅  http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`✅  Dashboard → http://localhost:${PORT}`));
