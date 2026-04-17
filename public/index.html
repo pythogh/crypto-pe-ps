@@ -517,7 +517,7 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
       pointRadius: 0, tension: 0.35, spanGaps: true };
   });
 
-  const isRev  = metric === 'rev30d';
+  const isRevType  = metric === 'rev30d';
   const tickCb = isRev ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
   const ttCb   = isRev ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
 
