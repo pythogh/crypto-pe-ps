@@ -174,7 +174,12 @@
   <button class="tab-btn" data-tab="compare">Compare</button>
 </div>
 
-<div id="loading">Fetching data…</div>
+<div id="loading">
+  <div style="font-family:var(--mono);font-size:12px;color:var(--sienna);margin-bottom:12px" id="loading-text">Fetching data…</div>
+  <div style="width:200px;height:3px;background:var(--parchment);border-radius:2px;margin:0 auto">
+    <div id="loading-bar" style="width:0%;height:100%;background:var(--orange);border-radius:2px;transition:width .3s ease"></div>
+  </div>
+</div>
 
 <!-- ── TAB : Tableau ── -->
 <div class="tab-pane active" id="tab-tableau">
@@ -671,11 +676,23 @@ document.getElementById('global-filters').querySelectorAll('.tf-btn').forEach(bt
 async function init() {
   const loadEl = document.getElementById('loading');
   try {
+    // Show progress during fetch
+    const bar = document.getElementById('loading-bar');
+    const txt = document.getElementById('loading-text');
+    let pct = 0;
+    const progress = setInterval(() => {
+      pct = Math.min(pct + 2, 85);
+      if (bar) bar.style.width = pct + '%';
+      if (txt) txt.textContent = `Fetching data… (${COINS.length} coins, ~${Math.ceil((100-pct)/2)}s)`;
+    }, 300);
+
     const res = await fetch('/api/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(COINS),
     });
+    clearInterval(progress);
+    if (bar) bar.style.width = '100%';
     if (!res.ok) throw new Error('Server HTTP ' + res.status);
     const data = await res.json();
 
