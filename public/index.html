@@ -343,7 +343,7 @@ let compareChartDaily = null;
 let coinDetailChart   = null;
 let selectedCoinIdx   = null;
 
-function buildCoinDetailChart(d) {
+function buildCoinDetailChart(d, canvasId) {
   if (!d || !d.prices?.length) return;
 
   // Update header
@@ -382,7 +382,6 @@ function buildCoinDetailChart(d) {
     borderWidth: 1.5, borderDash: [3,4], pointRadius: 0, tension: 0.4, spanGaps: true,
   });
 
-  if (coinDetailChart) { coinDetailChart.destroy(); coinDetailChart = null; }
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
@@ -396,7 +395,7 @@ function buildCoinDetailChart(d) {
   canvas.style.width  = '100%';
   canvas.style.height = '220px';
 
-  coinDetailChart = new Chart(canvas, {
+  const newChart = new Chart(canvas, {
     type: 'line',
     data: { labels, datasets },
     options: {
