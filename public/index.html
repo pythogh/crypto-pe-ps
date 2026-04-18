@@ -410,7 +410,9 @@ function renderTable() {
 
       ${cell(fmt(d.rev?.rev30d))}
       ${cell(fmt(d.rev?.revAnn))}
-      ${pe   != null ? `<td class="num pe-val">${pe.toFixed(1)}x</td>`    : `<td class="na">—</td>`}
+      ${pe != null ? `<td class="num" style="text-align:right;font-weight:500;color:${
+        pe < 10 ? '#16a34a' : pe < 25 ? '#ca8a04' : pe < 50 ? '#ea580c' : '#dc2626'
+      }">${pe.toFixed(1)}x</td>` : `<td class="na">—</td>`}
       ${fdve != null ? `<td class="num fdv-val">${fdve.toFixed(1)}x</td>` : `<td class="na">—</td>`}
     `;
     tbody.appendChild(tr);
@@ -590,30 +592,31 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
   }) : datasets;
 
   const endLabelsPlugin = {
-    id: 'endLabels',
+    id: 'endLabels-' + canvasId,
     afterDraw(chart) {
-      if (isDaily) return; // no end labels on bar chart
+      if (isDaily) return;
       const ctx = chart.ctx;
       chart.data.datasets.forEach((ds, i) => {
         const meta = chart.getDatasetMeta(i);
         if (meta.hidden) return;
-        const pts = meta.data.filter(p => !isNaN(p.y) && isFinite(p.y));
-        if (!pts.length) return;
-        const last = pts[pts.length - 1];
-        const val  = ds.data.filter(v => v !== null && isFinite(v)).slice(-1)[0];
-        if (val == null) return;
-        const label = isRevFlag ? (fmt(val)||'') : val.toFixed(1)+'x';
+        const visiblePts = meta.data.filter(p => p && !isNaN(p.x) && !isNaN(p.y));
+        if (!visiblePts.length) return;
+        const last = visiblePts[visiblePts.length - 1];
+        const validVals = ds.data.filter(v => v !== null && v !== undefined && isFinite(v));
+        if (!validVals.length) return;
+        const val = validVals[validVals.length - 1];
+        const label = isRevFlag ? (fmt(val)||'') : val.toFixed(1) + 'x';
         ctx.save();
         ctx.font = "bold 10px 'DM Mono', monospace";
         ctx.fillStyle = ds.borderColor;
         ctx.textAlign = 'left';
-        ctx.fillText(label, last.x + 4, last.y + 3);
+        ctx.fillText(label, last.x + 5, last.y + 4);
         ctx.restore();
       });
     }
   };
 
-  return new Chart(canvas, {
+  const newChart = new Chart(canvas, {
     type: isDaily ? 'bar' : 'line',
     data: { labels: allLabels, datasets: isDaily ? barDatasets : datasets },
     options: {
@@ -629,7 +632,6 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
           filter: item => item.parsed.y !== null,
           callbacks: { label: c => ` ${c.dataset.label}: ${ttCb(c.parsed.y)}` },
         },
-        endLabelsPlugin,
       },
       scales: {
         x: {
@@ -648,6 +650,37 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
     },
     plugins: [endLabelsPlugin],
   });
+
+  // Drill-down on bar click: show tooltip with coin details
+  if (isDaily) {
+    canvas.addEventListener('click', (e) => {
+      const pts = newChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+      if (!pts.length) return;
+      const dsIdx = pts[0].datasetIndex;
+      const barIdx = pts[0].index;
+      const d = useActive[dsIdx];
+      if (!d) return;
+      const date  = allLabels[barIdx];
+      const barVal = newChart.data.datasets[dsIdx].data[barIdx];
+      // Show a small tooltip popup
+      let popup = document.getElementById('drill-popup');
+      if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'drill-popup';
+        popup.style.cssText = 'position:fixed;background:#2C2417;color:#F2EDE4;font-family:"DM Mono",monospace;font-size:11px;padding:10px 14px;border-radius:6px;z-index:999;pointer-events:none;transition:opacity .2s';
+        document.body.appendChild(popup);
+      }
+      popup.innerHTML = `<b style="color:${getCoinColor(d,d._idx)}">${d.name}</b><br>${date}<br>Rev: ${fmt(barVal)||'—'}`;
+      const rect = canvas.getBoundingClientRect();
+      popup.style.left = (e.clientX + 12) + 'px';
+      popup.style.top  = (e.clientY - 10) + 'px';
+      popup.style.opacity = '1';
+      clearTimeout(popup._timer);
+      popup._timer = setTimeout(() => { popup.style.opacity = '0'; }, 2500);
+    });
+  }
+
+  return newChart;
 }
 
 
@@ -706,7 +739,7 @@ async function init() {
     });
 
     // Par défaut : hyperliquid, pump-fun, aave
-    const defaultIds = ['hyperliquid', 'pump-fun', 'aave'];
+    const defaultIds = ['hyperliquid', 'pump-fun'];
     allData.forEach(d => {
       if (defaultIds.includes(d.cgId)) selectedCoins.add(d._idx);
     });
