@@ -433,7 +433,9 @@ function renderTable() {
       ${pe != null ? `<td class="num" style="text-align:right;font-weight:500;color:${
         pe < 10 ? '#16a34a' : pe < 25 ? '#ca8a04' : pe < 50 ? '#ea580c' : '#dc2626'
       }">${pe.toFixed(1)}x</td>` : `<td class="na">—</td>`}
-      ${fdve != null ? `<td class="num fdv-val">${fdve.toFixed(1)}x</td>` : `<td class="na">—</td>`}
+      ${fdve != null ? `<td class="num" style="text-align:right;font-weight:500;color:${
+        fdve < 10 ? '#16a34a' : fdve < 25 ? '#ca8a04' : fdve < 50 ? '#ea580c' : '#dc2626'
+      }">${fdve.toFixed(1)}x</td>` : `<td class="na">—</td>`}
     `;
     tbody.appendChild(tr);
   });
@@ -606,9 +608,10 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
     return {
       label: d.symbol, data,
       backgroundColor: barColor,
-      borderColor: barColor,
+      borderColor: 'transparent',
       borderWidth: 0,
       borderRadius: 2,
+      borderSkipped: false,
     };
   }) : datasets;
 
