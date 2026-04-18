@@ -386,11 +386,15 @@ function buildCoinDetailChart(d) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // Explicitly set pixel dimensions before Chart.js renders
-  const parent = canvas.parentElement;
-  const w = parent.clientWidth || parent.offsetWidth || 900;
-  const h = parent.clientHeight || parent.offsetHeight || 220;
-  if (w > 0) { canvas.width = w; canvas.height = h; }
+  // Destroy any stale Chart.js instance on this canvas
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
+
+  // Hardcode dimensions — canvas in <tr> can't be measured reliably
+  canvas.width  = 1000;
+  canvas.height = 220;
+  canvas.style.width  = '100%';
+  canvas.style.height = '220px';
 
   coinDetailChart = new Chart(canvas, {
     type: 'line',
