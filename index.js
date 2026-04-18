@@ -11,24 +11,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // Simple fetch using built-in https — zero dependencies
-function fetchJSON(url, headers = {}) {
+function fetchJSON(url, headers = {}, retries = 2) {
   return new Promise((resolve, reject) => {
     const options = {
       headers: { 'Accept': 'application/json', ...headers },
-      timeout: 12000,
+      timeout: 15000,
     };
-    https.get(url, options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        if (res.statusCode !== 200) {
-          reject(new Error(`HTTP ${res.statusCode}`));
-        } else {
-          try { resolve(JSON.parse(data)); }
-          catch(e) { reject(e); }
-        }
+    const attempt = (n) => {
+      https.get(url, options, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          if (res.statusCode === 429 && n > 0) {
+            // Rate limited — wait 1s and retry
+            console.warn(`[rate limit] retrying ${url.split('?')[0].split('/').slice(-2).join('/')}`);
+            setTimeout(() => attempt(n - 1), 1000);
+          } else if (res.statusCode !== 200) {
+            reject(new Error(`HTTP ${res.statusCode}`));
+          } else {
+            try { resolve(JSON.parse(data)); }
+            catch(e) { reject(e); }
+          }
+        });
+      }).on('error', reject).on('timeout', () => {
+        if (n > 0) { setTimeout(() => attempt(n - 1), 500); }
+        else reject(new Error('timeout'));
       });
-    }).on('error', reject).on('timeout', () => reject(new Error('timeout')));
+    };
+    attempt(retries);
   });
 }
 
@@ -36,11 +46,26 @@ const CG_H = { 'x-cg-demo-api-key': CG_KEY };
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
+// Process array in sequential batches with delay
+async function batchProcess(items, batchSize, delayMs, fn) {
+  const results = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(fn));
+    results.push(...batchResults);
+    if (i + batchSize < items.length) {
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+  return results;
+}
+
 app.post('/api/batch', async (req, res) => {
   const coins = req.body;
   console.log(`[batch] ${coins.length} coins`);
 
-  const results = await Promise.all(coins.map(async ({ cgId, llamaSlug }) => {
+  // Process 5 coins at a time, 500ms between batches — avoids CoinGecko rate limit
+  const results = await batchProcess(coins, 5, 500, async ({ cgId, llamaSlug }) => {
     try {
       const coin = await fetchJSON(
         `${CG_BASE}/coins/${cgId}?localization=false&tickers=false&community_data=false&developer_data=false`,
