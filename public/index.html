@@ -45,32 +45,29 @@
 
     /* ── Tabs ── */
     .tabs {
-      display: flex; gap: 0; margin-bottom: 0; padding-top: 10px;
-      border-bottom: var(--border);
-      position: sticky; top: 72px; z-index: 99;
+      display: flex; gap: 8px; margin-bottom: 0; padding: 12px 0 14px;
+      position: sticky; top: 67px; z-index: 99;
       background: var(--cream);
       box-shadow: 0 8px 0 8px var(--cream);
     }
     .tab-btn {
       font-family: var(--mono); font-size: 11px; text-transform: uppercase;
-      letter-spacing: .06em; padding: 8px 28px 10px;
-      background: none; border: none; cursor: pointer;
-      color: var(--sand); transition: color .15s;
-      position: relative; bottom: -1px;
+      letter-spacing: .06em; padding: 7px 0 8px;
+      width: 120px; text-align: center;
+      background: none; border: 1px solid transparent; border-radius: 6px;
+      cursor: pointer; color: var(--sand); transition: all .15s;
     }
-    .tab-btn:hover { color: var(--sienna); }
+    .tab-btn:hover { color: var(--sienna); border-color: var(--parchment); }
     .tab-btn.active {
       color: var(--ink);
-      border-bottom: 2px solid var(--ink);
+      border: 1px solid var(--parchment);
+      background: var(--white);
     }
 
     .tab-pane { display: none; }
     .tab-pane.active {
       display: block;
-      border: var(--border);
-      border-radius: 8px;
-      padding: 0 24px 32px;
-      margin-top: 16px;
+      padding-top: 0;
     }
 
     /* ── Toolbar ── */
