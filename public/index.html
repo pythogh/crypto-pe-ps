@@ -582,9 +582,9 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
     const { data } = getMetricSeries(d, metric, globalDays);
     return {
       label: d.symbol, data,
-      backgroundColor: barColor + 'AA',
+      backgroundColor: barColor,
       borderColor: barColor,
-      borderWidth: 1,
+      borderWidth: 0,
       borderRadius: 2,
     };
   }) : datasets;
