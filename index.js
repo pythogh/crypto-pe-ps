@@ -10,6 +10,12 @@ const LL_BASE = 'https://api.llama.fi';
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// ── Cache ─────────────────────────────────────────────────────────────────────
+let cache       = null;
+let cacheTime   = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// ── HTTP helper ───────────────────────────────────────────────────────────────
 function fetchJSON(url, headers = {}, retries = 2) {
   return new Promise((resolve, reject) => {
     const options = { headers: { 'Accept': 'application/json', ...headers }, timeout: 15000 };
@@ -19,8 +25,7 @@ function fetchJSON(url, headers = {}, retries = 2) {
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
           if (res.statusCode === 429 && n > 0) {
-            console.warn(`[429] retrying...`);
-            setTimeout(() => attempt(n - 1), 1000);
+            setTimeout(() => attempt(n - 1), 1500);
           } else if (res.statusCode !== 200) {
             reject(new Error(`HTTP ${res.statusCode}`));
           } else {
@@ -38,87 +43,160 @@ function fetchJSON(url, headers = {}, retries = 2) {
 
 const CG_H = { 'x-cg-demo-api-key': CG_KEY };
 
-app.get('/health', (req, res) => res.json({ ok: true }));
+// ── Fetch all coins data ──────────────────────────────────────────────────────
+async function fetchAllCoins(coins) {
+  console.log(`[refresh] fetching ${coins.length} coins…`);
+  const start = Date.now();
 
-async function processCoin({ cgId, llamaSlug }) {
-  try {
-    const coin = await fetchJSON(
-      `${CG_BASE}/coins/${cgId}?localization=false&tickers=false&community_data=false&developer_data=false`,
-      CG_H
-    );
-    console.log(`[CG ✅] ${cgId}`);
+  // Step 1 — CoinGecko batch: prix/mcap/fdv/24h for ALL coins in ONE request
+  const ids = coins.map(c => c.cgId).join(',');
+  const markets = await fetchJSON(
+    `${CG_BASE}/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=250&price_change_percentage=24h`,
+    CG_H
+  );
+  const marketMap = {};
+  markets.forEach(m => { marketMap[m.id] = m; });
+  console.log(`[CG batch ✅] ${markets.length} coins in ${Date.now()-start}ms`);
 
-    const start365 = Math.floor(Date.now() / 1000) - 365 * 86400;
-    let prices = [];
-    try {
-      const llPrice = await fetchJSON(
-        `https://coins.llama.fi/chart/coingecko:${cgId}?start=${start365}&span=365&period=1d`
-      );
-      const pts = llPrice?.coins?.[`coingecko:${cgId}`]?.prices || [];
-      prices = pts.map(p => [p.timestamp * 1000, p.price]);
-    } catch(e) { console.warn(`[LL price ⚠️] ${cgId}`); }
-
-    let revData = null;
-    for (const slug of [llamaSlug, cgId].filter(Boolean)) {
+  // Step 2 — DefiLlama price history (parallel, no rate limit)
+  const priceResults = await Promise.all(
+    coins.map(async ({ cgId }) => {
       try {
+        const start365 = Math.floor(Date.now() / 1000) - 365 * 86400;
         const d = await fetchJSON(
-          `${LL_BASE}/summary/fees/${encodeURIComponent(slug)}?dataType=dailyRevenue`
+          `https://coins.llama.fi/chart/coingecko:${cgId}?start=${start365}&span=365&period=1d`
         );
-        const allPts = d.totalDataChart || [];
-        if (!allPts.length) continue;
-        const last30 = allPts.slice(-30);
-        const rev30d = last30.reduce((s, [, v]) => s + (v || 0), 0);
-        const rev24h = allPts[allPts.length - 1]?.[1] ?? null;
-        const rev48h = allPts[allPts.length - 2]?.[1] ?? null;
-        revData = {
-          rev30d,
-          rev7d:       last30.slice(-7).reduce((s, [, v]) => s + (v || 0), 0),
-          rev24h,
-          rev24hChange: (rev24h && rev48h && rev48h > 0) ? ((rev24h - rev48h) / rev48h) * 100 : null,
-          revAnn:      rev30d * 12,
-          history:     allPts.map(([ts, v]) => [ts * 1000, v || 0]),
-        };
-        console.log(`[LL ✅] ${slug} — 30d=$${Math.round(rev30d).toLocaleString()}`);
-        break;
-      } catch(e) { console.warn(`[LL ⚠️] ${slug}`); }
-    }
+        const pts = d?.coins?.[`coingecko:${cgId}`]?.prices || [];
+        return { cgId, prices: pts.map(p => [p.timestamp * 1000, p.price]) };
+      } catch(e) {
+        return { cgId, prices: [] };
+      }
+    })
+  );
+  const priceMap = {};
+  priceResults.forEach(({ cgId, prices }) => { priceMap[cgId] = prices; });
+  console.log(`[LL prices ✅] ${Date.now()-start}ms`);
 
+  // Step 3 — DefiLlama revenue (batches of 8, small delay)
+  const revResults = [];
+  for (let i = 0; i < coins.length; i += 8) {
+    const batch = coins.slice(i, i + 8);
+    const results = await Promise.all(batch.map(async ({ cgId, llamaSlug }) => {
+      for (const slug of [llamaSlug, cgId].filter(Boolean)) {
+        try {
+          const d = await fetchJSON(
+            `${LL_BASE}/summary/fees/${encodeURIComponent(slug)}?dataType=dailyRevenue`
+          );
+          const allPts = d.totalDataChart || [];
+          if (!allPts.length) continue;
+          const last30 = allPts.slice(-30);
+          const rev30d = last30.reduce((s, [, v]) => s + (v || 0), 0);
+          const rev24h = allPts[allPts.length - 1]?.[1] ?? null;
+          const rev48h = allPts[allPts.length - 2]?.[1] ?? null;
+          return {
+            cgId,
+            rev: {
+              rev30d, rev7d: last30.slice(-7).reduce((s,[,v])=>s+(v||0),0),
+              rev24h, rev24hChange: (rev24h&&rev48h&&rev48h>0)?((rev24h-rev48h)/rev48h)*100:null,
+              revAnn: rev30d * 12,
+              history: allPts.map(([ts,v]) => [ts*1000, v||0]),
+            }
+          };
+        } catch(e) {}
+      }
+      return { cgId, rev: null };
+    }));
+    revResults.push(...results);
+    if (i + 8 < coins.length) await new Promise(r => setTimeout(r, 300));
+  }
+  const revMap = {};
+  revResults.forEach(({ cgId, rev }) => { revMap[cgId] = rev; });
+  console.log(`[LL rev ✅] ${Date.now()-start}ms`);
+
+  // Step 4 — Assemble results
+  const results = coins.map(({ cgId }) => {
+    const m = marketMap[cgId];
+    if (!m) return { cgId, error: 'not found in markets' };
     return {
       cgId,
-      name:      coin.name,
-      symbol:    coin.symbol?.toUpperCase(),
-      logo:      coin.image?.small,
-      price:     coin.market_data?.current_price?.usd,
-      mcap:      coin.market_data?.market_cap?.usd,
-      fdv:       coin.market_data?.fully_diluted_valuation?.usd,
-      change24h: coin.market_data?.price_change_percentage_24h,
-      prices,
-      rev:       revData,
+      name:      m.name,
+      symbol:    m.symbol?.toUpperCase(),
+      logo:      m.image,
+      price:     m.current_price,
+      mcap:      m.market_cap,
+      fdv:       m.fully_diluted_valuation,
+      change24h: m.price_change_percentage_24h_in_currency ?? m.price_change_percentage_24h,
+      prices:    priceMap[cgId] || [],
+      rev:       revMap[cgId]   || null,
       error:     null,
     };
-  } catch(e) {
-    console.error(`[CG ❌] ${cgId} — ${e.message}`);
-    return { cgId, error: e.message };
-  }
+  });
+
+  console.log(`[refresh done] ${Date.now()-start}ms total`);
+  return results;
 }
+
+app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.post('/api/batch', async (req, res) => {
   const coins = req.body;
-  console.log(`[batch] ${coins.length} coins`);
 
-  const results = [];
-  const batchSize = 5;
-  for (let i = 0; i < coins.length; i += batchSize) {
-    const batch = coins.slice(i, i + batchSize);
-    const batchResults = await Promise.all(batch.map(processCoin));
-    results.push(...batchResults);
-    if (i + batchSize < coins.length) await new Promise(r => setTimeout(r, 500));
+  // Serve from cache if fresh
+  if (cache && Date.now() - cacheTime < CACHE_TTL) {
+    console.log(`[cache hit] ${Math.round((Date.now()-cacheTime)/1000)}s old`);
+    return res.json(cache);
   }
 
-  const ok = results.filter(r => !r.error).length;
-  console.log(`[batch] ${ok}/${coins.length} ok`);
-  res.json(results);
+  // Fetch fresh data
+  try {
+    const results = await fetchAllCoins(coins);
+    cache     = results;
+    cacheTime = Date.now();
+    res.json(results);
+  } catch(e) {
+    console.error('[batch error]', e.message);
+    // Serve stale cache if available
+    if (cache) { console.log('[serving stale cache]'); return res.json(cache); }
+    res.status(500).json({ error: e.message });
+  }
 });
+
+// Pre-warm cache on startup after 2s
+const DEFAULT_COINS = [
+  { cgId: 'hyperliquid',             llamaSlug: 'hyperliquid'   },
+  { cgId: 'pump-fun',                llamaSlug: 'pump'          },
+  { cgId: 'aave',                    llamaSlug: 'aave'          },
+  { cgId: 'lido-dao',                llamaSlug: 'lido'          },
+  { cgId: 'ether-fi',                llamaSlug: 'ether.fi'      },
+  { cgId: 'syrup',                   llamaSlug: 'maple-finance' },
+  { cgId: 'railgun',                 llamaSlug: 'railgun'       },
+  { cgId: 'sky',                     llamaSlug: 'sky'           },
+  { cgId: 'derive',                  llamaSlug: 'derive'        },
+  { cgId: 'kinetiq',                 llamaSlug: 'kinetiq'       },
+  { cgId: 'pendle',                  llamaSlug: 'pendle'        },
+  { cgId: 'jupiter-exchange-solana', llamaSlug: 'jupiter'       },
+  { cgId: 'lighter',                 llamaSlug: 'lighter'       },
+  { cgId: 'aerodrome-finance',       llamaSlug: 'aerodrome'     },
+  { cgId: 'meteora',                 llamaSlug: 'meteora'       },
+  { cgId: 'gmx',                     llamaSlug: 'gmx'           },
+  { cgId: 'fluid',                   llamaSlug: 'fluid'         },
+  { cgId: 'raydium',                 llamaSlug: 'raydium'       },
+  { cgId: 'uniswap',                 llamaSlug: 'uniswap'       },
+  { cgId: 'helium',                  llamaSlug: 'helium'        },
+  { cgId: 'bluefin',                 llamaSlug: 'bluefin'       },
+  { cgId: 'ethena',                  llamaSlug: 'ethena'        },
+];
+
+setTimeout(async () => {
+  console.log('[pre-warm] starting cache warm-up…');
+  try {
+    cache     = await fetchAllCoins(DEFAULT_COINS);
+    cacheTime = Date.now();
+    console.log('[pre-warm] done ✅');
+  } catch(e) {
+    console.error('[pre-warm error]', e.message);
+  }
+}, 2000);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server on port ${PORT}`));
