@@ -34,11 +34,10 @@
     header {
       display: flex; justify-content: space-between; align-items: center;
       padding: 18px 0 16px;
-      border-bottom: var(--border);
       background: var(--cream);
       position: sticky; top: 0; z-index: 100;
       margin-bottom: 0;
-      box-shadow: 0 1px 0 var(--parchment), 0 8px 0 8px var(--cream);
+      box-shadow: 0 8px 0 8px var(--cream);
     }
     .logo { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
     .logo em { color: var(--orange); font-style: normal; }
@@ -66,7 +65,13 @@
     }
 
     .tab-pane { display: none; }
-    .tab-pane.active { display: block; padding-top: 0; }
+    .tab-pane.active {
+      display: block;
+      border: var(--border);
+      border-radius: 8px;
+      padding: 0 24px 32px;
+      margin-top: 16px;
+    }
 
     /* ── Toolbar ── */
     .toolbar {
