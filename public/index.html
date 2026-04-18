@@ -97,7 +97,7 @@
 
     tbody tr.coin-row { border-bottom: var(--border); cursor: default; transition: background .12s; }
     tbody tr.coin-row:hover { background: var(--cream2); }
-    tbody tr.selected-coin { background: var(--cream2); border-left: 2px solid var(--orange); }
+    tbody tr.selected-coin { background: var(--cream2); }
     tbody td { padding: 12px 10px; vertical-align: middle; }
 
     td.td-name { display: flex; align-items: center; gap: 10px; }
@@ -154,16 +154,16 @@
 <body>
 
 <header>
-  <div class="logo">token<em>.</em>pe</div>
-  <div style="display:flex;align-items:center;gap:20px">
-    <div class="time-filters" id="header-days-filter">
-      <button class="tf-btn" data-days="7">7d</button>
-      <button class="tf-btn" data-days="30">1m</button>
-      <button class="tf-btn" data-days="90">3m</button>
-      <button class="tf-btn" data-days="180">6m</button>
-      <button class="tf-btn active" data-days="365">1y</button>
-    </div>
-    <div id="updated"><span style="color:var(--sienna)">Last update</span> <span id="update-time">—</span></div>
+  <div>
+    <div class="logo">token<em>.</em>pe</div>
+    <div id="updated" style="font-family:var(--mono);font-size:10px;color:var(--sand);margin-top:3px"><span id="update-time">—</span></div>
+  </div>
+  <div class="time-filters" id="header-days-filter">
+    <button class="tf-btn" data-days="7">7d</button>
+    <button class="tf-btn" data-days="30">1m</button>
+    <button class="tf-btn" data-days="90">3m</button>
+    <button class="tf-btn" data-days="180">6m</button>
+    <button class="tf-btn active" data-days="365">1y</button>
   </div>
 </header>
 
@@ -580,11 +580,15 @@ function renderTable() {
 
     const tr = document.createElement('tr');
     tr.className = 'coin-row' + (d._idx === selectedCoinIdx ? ' selected-coin' : '');
+  const wasSelected = d._idx === selectedCoinIdx;
   const _val = computeValuation(d);
   const _valCell = _val
     ? '<td class="num"><span title="P/E actuel : ' + _val.current.toFixed(1) + 'x — vert < ' + _val.p20.toFixed(1) + 'x · rouge > ' + _val.p80.toFixed(1) + 'x (percentiles 20/80 sur 1 an)" style="font-weight:500;color:' + _val.color + ';background:' + _val.bg + ';padding:2px 8px;border-radius:4px;cursor:help;font-size:11px">' + _val.label + '</span></td>'
     : '<td class="na">—</td>';
     tr.innerHTML = `
+      <td style="width:28px;text-align:center;color:var(--sienna);font-family:var(--mono);font-size:14px;padding-left:8px">
+        <span class="row-toggle">${wasSelected ? '×' : '+'}</span>
+      </td>
       <td class="td-name">
         <img class="coin-logo" src="${d.logo||''}" alt="" />
         <div><div class="coin-name">${d.name}</div><div class="coin-sym">${d.symbol}</div></div>
@@ -619,8 +623,8 @@ function renderTable() {
       ${_valCell}
     `;
     tr.addEventListener('click', () => {
-      const wasSelected = d._idx === selectedCoinIdx;
-
+      // Update all toggle icons
+      document.querySelectorAll('tbody tr.coin-row .row-toggle').forEach(s => s.textContent = '+');
       // Close any open detail row
       document.querySelectorAll('tbody tr.coin-row').forEach(r => r.classList.remove('selected-coin'));
       document.querySelectorAll('tr.coin-detail-row').forEach(r => r.remove());
@@ -632,6 +636,8 @@ function renderTable() {
       // Open new detail row below
       selectedCoinIdx = d._idx;
       tr.classList.add('selected-coin');
+      const toggleIcon = tr.querySelector('.row-toggle');
+      if (toggleIcon) toggleIcon.textContent = '×';
 
       const detailRow = document.createElement('tr');
       detailRow.className = 'coin-detail-row';
@@ -1025,8 +1031,12 @@ function buildCompareChart() {
 document.getElementById('global-filters').querySelectorAll('.tf-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     globalDays = parseInt(btn.dataset.days);
-    document.querySelectorAll('#global-filters .tf-btn, #header-days-filter .tf-btn').forEach(b => {
-      b.classList.toggle('active', parseInt(b.dataset.days) === globalDays);
+    revDays    = globalDays;
+    dailyDays  = globalDays;
+    ['#global-filters', '#header-days-filter', '#rev-filters', '#daily-filters'].forEach(sel => {
+      document.querySelectorAll(sel + ' .tf-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.days) === globalDays);
+      });
     });
     buildCompareChart();
     redrawOpenDetailCharts();
@@ -1036,8 +1046,13 @@ document.getElementById('global-filters').querySelectorAll('.tf-btn').forEach(bt
 document.getElementById('header-days-filter').querySelectorAll('.tf-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     globalDays = parseInt(btn.dataset.days);
-    document.querySelectorAll('#global-filters .tf-btn, #header-days-filter .tf-btn').forEach(b => {
-      b.classList.toggle('active', parseInt(b.dataset.days) === globalDays);
+    revDays    = globalDays;
+    dailyDays  = globalDays;
+    // Sync all filter buttons
+    ['#global-filters', '#header-days-filter', '#rev-filters', '#daily-filters'].forEach(sel => {
+      document.querySelectorAll(sel + ' .tf-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.days) === globalDays);
+      });
     });
     buildCompareChart();
     redrawOpenDetailCharts();
@@ -1116,7 +1131,7 @@ async function init() {
 
     const updatedEl = document.getElementById('updated');
     const _now = new Date();
-    updatedEl.textContent = ok+'/'+COINS.length+' coins · updated ' +
+    document.getElementById('update-time').textContent = ok+'/'+COINS.length+' coins · updated ' +
       _now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) + ' ' +
       _now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
     if (ok < COINS.length) {
