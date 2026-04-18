@@ -337,7 +337,7 @@ let compareChartPE    = null;
 let compareChartDaily = null;
 let selectedCoinIdx   = null;
 
-function buildCoinDetailChart(d, canvasId) {
+function buildCoinDetailChart(d, canvasId, showZones) {
   if (!d || !d.prices?.length) return;
 
   // Update header
@@ -409,7 +409,7 @@ function buildCoinDetailChart(d, canvasId) {
           },
         },
         annotation: {
-          annotations: (() => {
+          annotations: (!showZones ? {} : (() => {
             const v = computeValuation(d);
             if (!v || !peArr) return {};
             return {
@@ -458,7 +458,7 @@ function buildCoinDetailChart(d, canvasId) {
                 },
               },
             };
-          })(),
+          })()),
         },
       },
       scales: {
@@ -633,37 +633,49 @@ function renderTable() {
       const detailRow = document.createElement('tr');
       detailRow.className = 'coin-detail-row';
       const canvasId = 'detail-canvas-' + d._idx;
+      const zoneId = 'zone-toggle-' + d._idx;
       detailRow.innerHTML = `
-        <td colspan="11" style="padding:0;background:var(--white);border-bottom:var(--border)">
-          <div style="display:flex;flex-direction:column;gap:12px;padding:20px 24px 24px">
+        <td colspan="12" style="padding:0;background:var(--white);border-bottom:var(--border)">
+          <div style="padding:20px 24px 24px;display:flex;flex-direction:column;gap:14px">
             <div style="display:flex;align-items:center;justify-content:space-between">
-              <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em">Price · P/E — ${d.name}</div>
-              <div style="display:flex;gap:12px">
-                <span style="font-family:var(--mono);font-size:10px;color:var(--sienna);display:flex;align-items:center;gap:4px">
+              <div style="display:flex;align-items:center;gap:16px">
+                <span style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em">Price · P/E — ${d.name}</span>
+                <span style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--sienna)">
                   <span style="width:8px;height:8px;border-radius:50%;background:${getCoinColor(d,d._idx)};display:inline-block"></span>Price
                 </span>
-                <span style="font-family:var(--mono);font-size:10px;color:var(--sienna);display:flex;align-items:center;gap:4px">
+                <span style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--sienna)">
                   <span style="width:12px;height:2px;background:repeating-linear-gradient(90deg,#9A7B5A 0 3px,transparent 3px 6px);display:inline-block"></span>P/E
                 </span>
               </div>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:var(--mono);font-size:9px;color:var(--sienna);user-select:none">
+                <input type="checkbox" id="${zoneId}" style="accent-color:var(--umber);cursor:pointer" />
+                Buy zones
+              </label>
             </div>
-            <div style="position:relative;height:220px;width:100%">
-              <canvas id="${canvasId}" style="position:absolute;top:0;left:0;width:100%;height:100%"></canvas>
+            <div style="border:var(--border);border-radius:6px;overflow:hidden;position:relative;height:340px">
+              <canvas id="${canvasId}" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
             </div>
           </div>
         </td>`;
 
       tr.insertAdjacentElement('afterend', detailRow);
+      // Buy zone toggle
+      const zoneChk = detailRow.querySelector('#' + zoneId);
+      if (zoneChk) {
+        zoneChk.addEventListener('change', () => {
+          buildCoinDetailChart(d, canvasId, zoneChk.checked);
+        });
+      }
       // Small delay ensures the row is visible before Chart.js measures canvas
       // ResizeObserver fires when canvas has real dimensions
       const canvasEl = detailRow.querySelector('canvas');
       if (canvasEl) {
         const obs = new ResizeObserver(() => {
-          if (canvasEl.offsetWidth > 0) { obs.disconnect(); buildCoinDetailChart(d, canvasId); }
+          if (canvasEl.offsetWidth > 0) { obs.disconnect(); buildCoinDetailChart(d, canvasId, false); }
         });
         obs.observe(canvasEl);
       } else {
-        setTimeout(() => buildCoinDetailChart(d, canvasId), 150);
+        setTimeout(() => buildCoinDetailChart(d, canvasId, false), 150);
       }
     });
     tbody.appendChild(tr);
