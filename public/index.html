@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -590,7 +589,7 @@ function renderTable() {
   const wasSelected = d._idx === selectedCoinIdx;
   const _val = computeValuation(d);
   const _valCell = _val
-    ? '<td class="num"><span title="P/E actuel : ' + _val.current.toFixed(1) + 'x — vert < ' + _val.p20.toFixed(1) + 'x · rouge > ' + _val.p80.toFixed(1) + 'x (percentiles 20/80 sur 1 an)" style="font-weight:500;color:' + _val.color + ';background:' + _val.bg + ';padding:2px 8px;border-radius:4px;cursor:help;font-size:11px">' + _val.label + '</span></td>'
+    ? '<td class="num"><span title="P/E actuel : ' + _val.current.toFixed(1) + 'x — vert < ' + _val.p20.toFixed(1) + 'x · rouge > ' + _val.p80.toFixed(1) + 'x (percentiles 20/80 sur 1 an)" style="font-weight:500;color:' + _val.color + ';background:' + _val.bg + ';padding:2px 8px;border-radius:4px;cursor:help;font-size:11px">' + _val.label + '</span></td>'
     : '<td class="na">—</td>';
     tr.innerHTML = `
       <td style="width:28px;text-align:center;color:var(--sienna);font-family:var(--mono);font-size:14px;padding-left:8px">
