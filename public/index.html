@@ -31,13 +31,16 @@
       padding: 0 28px 60px; max-width: 1060px; margin: 0 auto;
     }
 
+    #sticky-top {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--cream);
+      padding: 0;
+      box-shadow: 0 12px 0 12px var(--cream);
+    }
     header {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 18px 0 16px;
+      padding: 18px 0 14px;
       background: var(--cream);
-      position: sticky; top: 0; z-index: 100;
-      margin-bottom: 0;
-      box-shadow: 0 8px 0 8px var(--cream);
     }
     .logo { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
     .logo em { color: var(--orange); font-style: normal; }
@@ -46,9 +49,7 @@
     /* ── Tabs ── */
     .tabs {
       display: flex; gap: 8px; margin-bottom: 0; padding: 12px 0 14px;
-      position: sticky; top: 67px; z-index: 99;
       background: var(--cream);
-      box-shadow: 0 8px 0 8px var(--cream);
     }
     .tab-btn {
       font-family: var(--mono); font-size: 11px; text-transform: uppercase;
@@ -164,6 +165,7 @@
 </head>
 <body>
 
+<div id="sticky-top">
 <header>
   <div>
     <div class="logo">token<em>.</em>pe</div>
@@ -182,6 +184,7 @@
 <div class="tabs">
   <button class="tab-btn active" data-tab="compare">⇄ Compare</button>
   <button class="tab-btn" data-tab="tableau">≡ Table</button>
+</div>
 </div>
 
 <div id="loading">
