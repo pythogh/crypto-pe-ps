@@ -9,21 +9,21 @@
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --cream:      #F2EDE4;
+      --cream:     #F2EDE4;
       --cream2:    #EAE3D8;
       --parchment: #D9CEBC;
-      --sand:       #C4B49A;
+      --sand:      #C4B49A;
       --sienna:    #9A7B5A;
-      --umber:      #6B4F35;
-      --ink:        #2C2417;
-      --white:      #FFFFFF;
+      --umber:     #6B4F35;
+      --ink:       #2C2417;
+      --white:     #FFFFFF;
       --orange:    #C96B2F;
-      --green:      #3D6B4F;
-      --blue:       #4A6FA5;
-      --red:        #8B3A3A;
+      --green:     #3D6B4F;
+      --blue:      #4A6FA5;
+      --red:       #8B3A3A;
       --border:    1px solid var(--parchment);
-      --serif:      'EB Garamond', Georgia, serif;
-      --mono:       'DM Mono', monospace;
+      --serif:     'EB Garamond', Georgia, serif;
+      --mono:      'DM Mono', monospace;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -93,11 +93,9 @@
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     thead th {
       font-family: var(--mono); font-size: 10px; text-transform: uppercase;
-      letter-spacing: .07em; color: var(--sienna); 
-      padding: 12px 10px; /* RÉDUIT pour éviter la troncature */
+      letter-spacing: .07em; color: var(--sienna); padding: 18px 10px 12px;
       text-align: right; border-bottom: var(--border); font-weight: 400; white-space: nowrap;
-      position: sticky; top: 168px; /* AJUSTÉ pour s'aligner au bandeau */
-      background: var(--cream); z-index: 97; border-bottom: 2px solid var(--parchment) !important;
+      position: sticky; top: 162px; background: var(--cream); z-index: 97; border-bottom: 2px solid var(--parchment) !important; box-shadow: 0 8px 0 8px var(--cream);
     }
     thead th:first-child { text-align: left; }
     thead th.sortable { cursor: pointer; user-select: none; transition: color .15s; }
@@ -118,21 +116,23 @@
     td.num  { text-align: right; font-variant-numeric: tabular-nums; }
     td.pos  { color: var(--green); font-family: var(--mono); font-size: 12px; text-align: right; }
     td.neg  { color: var(--red);   font-family: var(--mono); font-size: 12px; text-align: right; }
-    td.na    { color: var(--sand);  font-family: var(--mono); font-size: 11px; text-align: right; }
+    td.na   { color: var(--sand);  font-family: var(--mono); font-size: 11px; text-align: right; }
     .pe-val  { color: var(--orange); font-weight: 500; }
     .fdv-val { color: var(--green);  font-weight: 500; }
 
     /* ── COMPARE TAB ── */
+
+
+
+
     .coin-selector {
-      display: flex; flex-wrap: wrap; gap: 8px; /* ESPACE AJUSTÉ */
-      overflow: visible; /* ÉVITE LA COUPURE */
+      display: flex; flex-wrap: wrap; gap: 6px;
     }
     .coin-chip {
-      display: inline-flex; align-items: center; gap: 5px; /* FLEX AJUSTÉ */
-      font-family: var(--mono); font-size: 10px; padding: 6px 12px; /* PADDING AJUSTÉ */
+      display: flex; align-items: center; gap: 5px;
+      font-family: var(--mono); font-size: 10px; padding: 4px 10px;
       border: var(--border); border-radius: 20px; background: var(--white);
       cursor: pointer; transition: all .15s; user-select: none;
-      white-space: nowrap; /* GARDE LE TEXTE ENTIER */
     }
     .coin-chip img { width: 14px; height: 14px; border-radius: 50%; }
     .coin-chip.active { color: var(--white); border-color: transparent; }
@@ -175,6 +175,7 @@
   </div>
 </header>
 
+<!-- Tabs -->
 <div class="tabs">
   <button class="tab-btn active" data-tab="compare">⇄ Compare</button>
   <button class="tab-btn" data-tab="tableau">≡ Table</button>
@@ -187,8 +188,9 @@
   </div>
 </div>
 
+<!-- ── TAB : Tableau ── -->
 <div class="tab-pane" id="tab-tableau">
-  <div style="position:sticky;top:116px;z-index:98;background:var(--cream);padding:16px 0 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;border-bottom:var(--border);">
+  <div style="position:sticky;top:116px;z-index:98;background:var(--cream);padding:16px 0 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;border-bottom:var(--border);box-shadow:0 12px 0 12px var(--cream)">
     <div style="font-family:var(--mono);font-size:10px;color:var(--sienna)">Rev. ann. = Rev. 30d × 12</div>
     <div style="display:flex;gap:10px;font-family:var(--mono);font-size:9px;color:var(--sand)">
       <span>P/E :</span>
@@ -220,12 +222,15 @@
   </table>
 </div>
 
+<!-- ── TAB : Comparatif ── -->
 <div class="tab-pane active" id="tab-compare">
 
-  <div style="position:sticky;top:116px;z-index:98;background:var(--cream);padding:16px 2px 14px;border-bottom:var(--border);margin-bottom:20px;">
+  <!-- Sticky coin selector -->
+  <div style="position:sticky;top:116px;z-index:98;background:var(--cream);padding:16px 0 14px;border-bottom:var(--border);margin-bottom:20px;box-shadow:0 12px 0 12px var(--cream)">
     <div class="coin-selector" id="coin-selector"></div>
   </div>
 
+  <!-- Two charts -->
   <div style="display:flex;flex-direction:column;gap:16px">
     <div class="compare-chart-wrap">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -520,7 +525,7 @@ let sortKey = 'mcap', sortDir = 'desc';
 
 function getSortVal(d, key) {
   switch(key) {
-    case 'price':        return d.price              ?? -Infinity;
+    case 'price':        return d.price             ?? -Infinity;
     case 'change24h':    return d.change24h          ?? -Infinity;
     case 'mcap':         return d.mcap               ?? -Infinity;
     case 'fdv':          return d.fdv                ?? -Infinity;
@@ -553,13 +558,13 @@ function computeValuation(d) {
   if (peHistory.length < 30) return null;
 
   const sorted  = [...peHistory].sort((a, b) => a - b);
-  const p20      = sorted[Math.floor(sorted.length * 0.20)];
-  const p80      = sorted[Math.floor(sorted.length * 0.80)];
+  const p20     = sorted[Math.floor(sorted.length * 0.20)];
+  const p80     = sorted[Math.floor(sorted.length * 0.80)];
   const current = d.mcap / d.rev.revAnn;
 
-  if (current <= p20)      return { label: 'Cheap',      color: '#16a34a', bg: 'rgba(22,163,74,0.1)',  p20, p80, current };
-  else if (current <= p80) return { label: 'Fair',       color: '#ca8a04', bg: 'rgba(202,138,4,0.1)',  p20, p80, current };
-  else                       return { label: 'Expensive', color: '#dc2626', bg: 'rgba(220,38,38,0.1)', p20, p80, current };
+  if (current <= p20)      return { label: 'Cheap',     color: '#16a34a', bg: 'rgba(22,163,74,0.1)',  p20, p80, current };
+  else if (current <= p80) return { label: 'Fair',      color: '#ca8a04', bg: 'rgba(202,138,4,0.1)',  p20, p80, current };
+  else                     return { label: 'Expensive', color: '#dc2626', bg: 'rgba(220,38,38,0.1)', p20, p80, current };
 }
 
 function renderTable() {
@@ -584,7 +589,7 @@ function renderTable() {
   const wasSelected = d._idx === selectedCoinIdx;
   const _val = computeValuation(d);
   const _valCell = _val
-    ? '<td class="num"><span title="P/E actuel : ' + _val.current.toFixed(1) + 'x — vert < ' + _val.p20.toFixed(1) + 'x · rouge > ' + _val.p80.toFixed(1) + 'x (percentiles 20/80 sur 1 an)" style="font-weight:500;color:' + _val.color + ';background:' + _val.bg + ';padding:2px 8px;border-radius:4px;cursor:help;font-size:11px">' + _val.label + '</span></td>'
+    ? '<td class="num"><span title="P/E actuel : ' + _val.current.toFixed(1) + 'x — vert < ' + _val.p20.toFixed(1) + 'x · rouge > ' + _val.p80.toFixed(1) + 'x (percentiles 20/80 sur 1 an)" style="font-weight:500;color:' + _val.color + ';background:' + _val.bg + ';padding:2px 8px;border-radius:4px;cursor:help;font-size:11px">' + _val.label + '</span></td>'
     : '<td class="na">—</td>';
     tr.innerHTML = `
       <td style="width:28px;text-align:center;color:var(--sienna);font-family:var(--mono);font-size:14px;padding-left:8px">
@@ -920,7 +925,7 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
         const last   = visPts[visPts.length - 1];
         const valArr = ds.data.filter(v => v != null && isFinite(v));
         if (!valArr.length) return;
-        const val    = valArr[valArr.length - 1];
+        const val   = valArr[valArr.length - 1];
         const label = isRevFlag ? (fmt(val)||'') : val.toFixed(1) + 'x';
         items.push({ label, color: ds.borderColor, x: last.x, y: last.y });
       });
@@ -1024,7 +1029,7 @@ function buildCompareChart() {
   if (!active.length) return;
 
   compareChartPE    = makeCompareChart('compare-chart-pe',    'compare-legend-pe',    'pe',        active, compareChartPE,    globalDays);
-  compareChartRev   = makeCompareChart('compare-chart-rev',   'compare-legend-rev',   'rev30d',    active, compareChartRev,    revDays);
+  compareChartRev   = makeCompareChart('compare-chart-rev',   'compare-legend-rev',   'rev30d',    active, compareChartRev,   revDays);
   compareChartDaily = makeCompareChart('compare-chart-daily', 'compare-legend-daily', 'rev_daily', active, compareChartDaily, dailyDays);
 }
 
@@ -1153,4 +1158,4 @@ async function init() {
 init();
 </script>
 </body>
-</html>
+</html
