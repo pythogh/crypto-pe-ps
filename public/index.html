@@ -45,7 +45,7 @@
     }
     .tab-btn {
       font-family: var(--mono); font-size: 11px; text-transform: uppercase;
-      letter-spacing: .06em; padding: 8px 18px 10px;
+      letter-spacing: .06em; padding: 8px 28px 10px;
       background: none; border: none; cursor: pointer;
       color: var(--sand); transition: color .15s;
       position: relative; bottom: -1px;
@@ -980,7 +980,6 @@ async function init() {
     buildCoinSelector();
     buildCompareChart(); // compare is default tab
 
-    document.getElementById('tab-tableau').classList.add('active');
     const updatedEl = document.getElementById('updated');
     const _now = new Date();
     updatedEl.textContent = ok+'/'+COINS.length+' coins · updated ' +
