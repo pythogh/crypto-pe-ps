@@ -9,21 +9,21 @@
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --cream:     #F2EDE4;
+      --cream:      #F2EDE4;
       --cream2:    #EAE3D8;
       --parchment: #D9CEBC;
-      --sand:      #C4B49A;
+      --sand:       #C4B49A;
       --sienna:    #9A7B5A;
-      --umber:     #6B4F35;
-      --ink:       #2C2417;
-      --white:     #FFFFFF;
+      --umber:      #6B4F35;
+      --ink:        #2C2417;
+      --white:      #FFFFFF;
       --orange:    #C96B2F;
-      --green:     #3D6B4F;
-      --blue:      #4A6FA5;
-      --red:       #8B3A3A;
+      --green:      #3D6B4F;
+      --blue:       #4A6FA5;
+      --red:        #8B3A3A;
       --border:    1px solid var(--parchment);
-      --serif:     'EB Garamond', Georgia, serif;
-      --mono:      'DM Mono', monospace;
+      --serif:      'EB Garamond', Georgia, serif;
+      --mono:       'DM Mono', monospace;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -35,6 +35,7 @@
       padding: 18px 0 14px;
       background: var(--cream);
       position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 12px 0 0 var(--cream);
     }
     .logo { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
     .logo em { color: var(--orange); font-style: normal; }
@@ -45,6 +46,7 @@
       display: flex; gap: 8px; margin-bottom: 0; padding: 12px 0 14px;
       background: var(--cream);
       position: sticky; top: 66px; z-index: 99;
+      box-shadow: 0 12px 0 0 var(--cream);
     }
     .tab-btn {
       font-family: var(--mono); font-size: 11px; text-transform: uppercase;
@@ -91,9 +93,11 @@
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     thead th {
       font-family: var(--mono); font-size: 10px; text-transform: uppercase;
-      letter-spacing: .07em; color: var(--sienna); padding: 12px 10px;
+      letter-spacing: .07em; color: var(--sienna); 
+      padding: 12px 10px; /* RÉDUIT pour éviter la troncature */
       text-align: right; border-bottom: var(--border); font-weight: 400; white-space: nowrap;
-      position: sticky; top: 168px; background: var(--cream); z-index: 97; border-bottom: 2px solid var(--parchment) !important;
+      position: sticky; top: 168px; /* AJUSTÉ pour s'aligner au bandeau */
+      background: var(--cream); z-index: 97; border-bottom: 2px solid var(--parchment) !important;
     }
     thead th:first-child { text-align: left; }
     thead th.sortable { cursor: pointer; user-select: none; transition: color .15s; }
@@ -120,13 +124,15 @@
 
     /* ── COMPARE TAB ── */
     .coin-selector {
-      display: flex; flex-wrap: wrap; gap: 8px; overflow: visible;
+      display: flex; flex-wrap: wrap; gap: 8px; /* ESPACE AJUSTÉ */
+      overflow: visible; /* ÉVITE LA COUPURE */
     }
     .coin-chip {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-family: var(--mono); font-size: 10px; padding: 6px 12px;
+      display: inline-flex; align-items: center; gap: 5px; /* FLEX AJUSTÉ */
+      font-family: var(--mono); font-size: 10px; padding: 6px 12px; /* PADDING AJUSTÉ */
       border: var(--border); border-radius: 20px; background: var(--white);
-      cursor: pointer; transition: all .15s; user-select: none; white-space: nowrap;
+      cursor: pointer; transition: all .15s; user-select: none;
+      white-space: nowrap; /* GARDE LE TEXTE ENTIER */
     }
     .coin-chip img { width: 14px; height: 14px; border-radius: 50%; }
     .coin-chip.active { color: var(--white); border-color: transparent; }
@@ -295,6 +301,7 @@ const COINS = [
   { cgId: 'ethena',                  llamaSlug: 'ethena'        },
 ];
 
+// Couleurs des brands crypto
 const BRAND_COLORS = {
   'hyperliquid':             '#00D4C8',
   'pump-fun':                '#00C853',
@@ -330,9 +337,9 @@ function getCoinColor(d, idx) {
 }
 
 let allData    = [];
-let globalDays = 365;
-let revDays    = 365;
-let dailyDays  = 30;
+let globalDays = 365;  // PE chart
+let revDays    = 365;  // Rolling 30d chart
+let dailyDays  = 30;   // Daily revenue chart
 
 let selectedCoins   = new Set();
 let compareChartRev   = null;
@@ -342,6 +349,9 @@ let selectedCoinIdx   = null;
 
 function buildCoinDetailChart(d, canvasId, showZones, days) {
   if (!d || !d.prices?.length) return;
+
+  // Update header
+
   days = days || globalDays;
   const cutoff = Date.now() - days * 86400000;
   const src    = d.prices.filter(([ts]) => ts >= cutoff);
@@ -350,6 +360,7 @@ function buildCoinDetailChart(d, canvasId, showZones, days) {
   const prices = use.map(([,p]) => p);
   const pNow   = prices[prices.length - 1] || 1;
 
+  // P/E series
   let peArr = null;
   if (d.rev?.history?.length && d.mcap) {
     const rh = d.rev.history;
@@ -377,15 +388,18 @@ function buildCoinDetailChart(d, canvasId, showZones, days) {
 
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+
+  // Destroy any stale Chart.js instance on this canvas
   const existing = Chart.getChart(canvas);
   if (existing) existing.destroy();
 
+  // Hardcode dimensions — canvas in <tr> can't be measured reliably
   canvas.width  = 1000;
   canvas.height = 220;
   canvas.style.width  = '100%';
   canvas.style.height = '220px';
 
-  new Chart(canvas, {
+  const newChart = new Chart(canvas, {
     type: 'line',
     data: { labels, datasets },
     options: {
@@ -409,23 +423,67 @@ function buildCoinDetailChart(d, canvasId, showZones, days) {
             const v = computeValuation(d);
             if (!v || !peArr) return {};
             return {
-              zCheap: { type: 'box', yScaleID: 'yPE', yMin: 0, yMax: v.p20, backgroundColor: 'rgba(22,163,74,0.08)', borderWidth: 0 },
-              zExpensive: { type: 'box', yScaleID: 'yPE', yMin: v.p80, yMax: v.p80 * 3, backgroundColor: 'rgba(220,38,38,0.07)', borderWidth: 0 },
-              lP20: { type: 'line', yScaleID: 'yPE', yMin: v.p20, yMax: v.p20, borderColor: 'rgba(22,163,74,0.4)', borderWidth: 1, borderDash: [4, 3], label: { content: 'cheap < ' + v.p20.toFixed(0) + 'x', display: true, position: 'start', color: 'rgba(22,163,74,0.7)', font: { family: "'DM Mono',monospace", size: 8 }, backgroundColor: 'transparent', padding: 2 } },
-              lP80: { type: 'line', yScaleID: 'yPE', yMin: v.p80, yMax: v.p80, borderColor: 'rgba(220,38,38,0.4)', borderWidth: 1, borderDash: [4, 3], label: { content: 'expensive > ' + v.p80.toFixed(0) + 'x', display: true, position: 'start', color: 'rgba(220,38,38,0.7)', font: { family: "'DM Mono',monospace", size: 8 }, backgroundColor: 'transparent', padding: 2 } },
+              zCheap: {
+                type: 'box', yScaleID: 'yPE',
+                yMin: 0, yMax: v.p20,
+                backgroundColor: 'rgba(22,163,74,0.08)',
+                borderWidth: 0,
+              },
+              zExpensive: {
+                type: 'box', yScaleID: 'yPE',
+                yMin: v.p80, yMax: v.p80 * 3,
+                backgroundColor: 'rgba(220,38,38,0.07)',
+                borderWidth: 0,
+              },
+              lP20: {
+                type: 'line', yScaleID: 'yPE',
+                yMin: v.p20, yMax: v.p20,
+                borderColor: 'rgba(22,163,74,0.4)',
+                borderWidth: 1, borderDash: [4, 3],
+                label: {
+                  content: 'cheap < ' + v.p20.toFixed(0) + 'x',
+                  display: true, position: 'start',
+                  color: 'rgba(22,163,74,0.7)',
+                  font: { family: "'DM Mono',monospace", size: 8 },
+                  backgroundColor: 'transparent', padding: 2,
+                },
+              },
+              lP80: {
+                type: 'line', yScaleID: 'yPE',
+                yMin: v.p80, yMax: v.p80,
+                borderColor: 'rgba(220,38,38,0.4)',
+                borderWidth: 1, borderDash: [4, 3],
+                label: {
+                  content: 'expensive > ' + v.p80.toFixed(0) + 'x',
+                  display: true, position: 'start',
+                  color: 'rgba(220,38,38,0.7)',
+                  font: { family: "'DM Mono',monospace", size: 8 },
+                  backgroundColor: 'transparent', padding: 2,
+                },
+              },
             };
           })()),
         },
       },
       scales: {
-        x: { grid: { color: 'rgba(180,160,130,0.1)' }, border: { display: false }, ticks: { font:{family:"'DM Mono',monospace",size:8}, color:'#9A7B5A', maxTicksLimit:8 } },
-        yP: { position: 'left', grid: { color: 'rgba(180,160,130,0.1)' }, border: { display: false }, ticks: { font:{family:"'DM Mono',monospace",size:8}, color: getCoinColor(d, d._idx), callback: v => fmtP(v)||'' } },
-        yPE: { position: 'right', display: !!peArr, grid: { display: false }, border: { display: false }, ticks: { font:{family:"'DM Mono',monospace",size:8}, color:'#9A7B5A', callback: v => v.toFixed(0)+'x' } },
+        x: {
+          grid: { color: 'rgba(180,160,130,0.1)' }, border: { display: false },
+          ticks: { font:{family:"'DM Mono',monospace",size:8}, color:'#9A7B5A', maxTicksLimit:8 },
+        },
+        yP: {
+          position: 'left', grid: { color: 'rgba(180,160,130,0.1)' }, border: { display: false },
+          ticks: { font:{family:"'DM Mono',monospace",size:8}, color: getCoinColor(d, d._idx), callback: v => fmtP(v)||'' },
+        },
+        yPE: {
+          position: 'right', display: !!peArr, grid: { display: false }, border: { display: false },
+          ticks: { font:{family:"'DM Mono',monospace",size:8}, color:'#9A7B5A', callback: v => v.toFixed(0)+'x' },
+        },
       },
     },
   });
 }
 
+// ── Formatters ────────────────────────────────────────────────────────────────
 function fmt(n) {
   if (n == null || isNaN(n)) return null;
   if (n === 0) return '$0';
@@ -446,6 +504,7 @@ function cell(val, cls = 'num') {
   return val ? `<td class="${cls}">${val}</td>` : `<td class="na">—</td>`;
 }
 
+// ── Tabs ──────────────────────────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -456,42 +515,51 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+// ── Sort ──────────────────────────────────────────────────────────────────────
 let sortKey = 'mcap', sortDir = 'desc';
+
 function getSortVal(d, key) {
   switch(key) {
-    case 'price': return d.price ?? -Infinity;
-    case 'change24h': return d.change24h ?? -Infinity;
-    case 'mcap': return d.mcap ?? -Infinity;
-    case 'fdv': return d.fdv ?? -Infinity;
-    case 'rev30d': return d.rev?.rev30d ?? -Infinity;
-    case 'revAnn': return d.rev?.revAnn ?? -Infinity;
-    case 'pe': return (d.rev?.revAnn>0&&d.mcap) ? d.mcap/d.rev.revAnn : Infinity;
-    case 'fdve': return (d.rev?.revAnn>0&&d.fdv) ? d.fdv /d.rev.revAnn : Infinity;
-    default: return -Infinity;
+    case 'price':        return d.price              ?? -Infinity;
+    case 'change24h':    return d.change24h          ?? -Infinity;
+    case 'mcap':         return d.mcap               ?? -Infinity;
+    case 'fdv':          return d.fdv                ?? -Infinity;
+
+    case 'rev30d':       return d.rev?.rev30d        ?? -Infinity;
+    case 'revAnn':       return d.rev?.revAnn        ?? -Infinity;
+    case 'pe':   return (d.rev?.revAnn>0&&d.mcap) ? d.mcap/d.rev.revAnn : Infinity;
+    case 'fdve': return (d.rev?.revAnn>0&&d.fdv)  ? d.fdv /d.rev.revAnn : Infinity;
+    default:     return -Infinity;
   }
 }
 
+
 function computeValuation(d) {
   if (!d.prices?.length || !d.mcap || !d.rev?.history?.length || !d.rev?.revAnn) return null;
-  const rh = d.rev.history;
+  const rh   = d.rev.history;
   const pNow = d.prices[d.prices.length - 1]?.[1] || 1;
   const cutoff = Date.now() - 365 * 86400000;
-  const src = d.prices.filter(([ts]) => ts >= cutoff);
+  const src  = d.prices.filter(([ts]) => ts >= cutoff);
   if (src.length < 30) return null;
+
   const peHistory = src.map(([ts, prix]) => {
     const w = rh.filter(([t]) => t >= ts - 30*86400000 && t <= ts);
     if (w.length < 5) return null;
     const revAnn = w.reduce((s,[,v]) => s+v, 0) * 12;
-    return revAnn > 0 ? (d.mcap * (prix / pNow)) / revAnn : null;
+    if (revAnn <= 0) return null;
+    return (d.mcap * (prix / pNow)) / revAnn;
   }).filter(v => v !== null);
+
   if (peHistory.length < 30) return null;
-  const sorted = [...peHistory].sort((a, b) => a - b);
-  const p20 = sorted[Math.floor(sorted.length * 0.20)];
-  const p80 = sorted[Math.floor(sorted.length * 0.80)];
+
+  const sorted  = [...peHistory].sort((a, b) => a - b);
+  const p20      = sorted[Math.floor(sorted.length * 0.20)];
+  const p80      = sorted[Math.floor(sorted.length * 0.80)];
   const current = d.mcap / d.rev.revAnn;
-  if (current <= p20) return { label: 'Cheap', color: '#16a34a', bg: 'rgba(22,163,74,0.1)', p20, p80, current };
-  else if (current <= p80) return { label: 'Fair', color: '#ca8a04', bg: 'rgba(202,138,4,0.1)', p20, p80, current };
-  else return { label: 'Expensive', color: '#dc2626', bg: 'rgba(220,38,38,0.1)', p20, p80, current };
+
+  if (current <= p20)      return { label: 'Cheap',      color: '#16a34a', bg: 'rgba(22,163,74,0.1)',  p20, p80, current };
+  else if (current <= p80) return { label: 'Fair',       color: '#ca8a04', bg: 'rgba(202,138,4,0.1)',  p20, p80, current };
+  else                       return { label: 'Expensive', color: '#dc2626', bg: 'rgba(220,38,38,0.1)', p20, p80, current };
 }
 
 function renderTable() {
@@ -499,55 +567,128 @@ function renderTable() {
   tbody.innerHTML = '<tr style="height:8px"><td colspan="13"></td></tr>';
   const sorted = [...allData].sort((a, b) => {
     const av = getSortVal(a, sortKey), bv = getSortVal(b, sortKey);
-    if (av === bv) return 0;
+    if (av ===  Infinity && bv ===  Infinity) return 0;
+    if (av ===  Infinity) return 1;  if (bv ===  Infinity) return -1;
+    if (av === -Infinity && bv === -Infinity) return 0;
+    if (av === -Infinity) return 1;  if (bv === -Infinity) return -1;
     return sortDir === 'desc' ? bv - av : av - bv;
   });
 
   sorted.forEach(d => {
-    const pe = d.rev?.revAnn > 0 && d.mcap ? d.mcap / d.rev.revAnn : null;
-    const fdve = d.rev?.revAnn > 0 && d.fdv ? d.fdv / d.rev.revAnn : null;
-    const chg = d.change24h;
+    const pe   = d.rev?.revAnn > 0 && d.mcap ? d.mcap / d.rev.revAnn : null;
+    const fdve = d.rev?.revAnn > 0 && d.fdv  ? d.fdv  / d.rev.revAnn : null;
+    const chg  = d.change24h;
+
     const tr = document.createElement('tr');
     tr.className = 'coin-row' + (d._idx === selectedCoinIdx ? ' selected-coin' : '');
-    const wasSelected = d._idx === selectedCoinIdx;
-    const _val = computeValuation(d);
-    const _valCell = _val ? `<td class="num"><span style="font-weight:500;color:${_val.color};background:${_val.bg};padding:2px 8px;border-radius:4px;font-size:11px">${_val.label}</span></td>` : '<td class="na">—</td>';
-    
+  const wasSelected = d._idx === selectedCoinIdx;
+  const _val = computeValuation(d);
+  const _valCell = _val
+    ? '<td class="num"><span title="P/E actuel : ' + _val.current.toFixed(1) + 'x — vert < ' + _val.p20.toFixed(1) + 'x · rouge > ' + _val.p80.toFixed(1) + 'x (percentiles 20/80 sur 1 an)" style="font-weight:500;color:' + _val.color + ';background:' + _val.bg + ';padding:2px 8px;border-radius:4px;cursor:help;font-size:11px">' + _val.label + '</span></td>'
+    : '<td class="na">—</td>';
     tr.innerHTML = `
-      <td style="width:28px;text-align:center;color:var(--sienna);font-family:var(--mono);font-size:14px;padding-left:8px"><span class="row-toggle">${wasSelected ? '×' : '+'}</span></td>
-      <td class="td-name"><img class="coin-logo" src="${d.logo||''}" alt="" /><div><div class="coin-name">${d.name}</div><div class="coin-sym">${d.symbol}</div></div></td>
+      <td style="width:28px;text-align:center;color:var(--sienna);font-family:var(--mono);font-size:14px;padding-left:8px">
+        <span class="row-toggle">${wasSelected ? '×' : '+'}</span>
+      </td>
+      <td class="td-name">
+        <img class="coin-logo" src="${d.logo||''}" alt="" />
+        <div><div class="coin-name">${d.name}</div><div class="coin-sym">${d.symbol}</div></div>
+      </td>
       ${cell(fmtP(d.price))}
       <td class="${chg==null?'na':chg>=0?'pos':'neg'}">${chg==null?'—':(chg>=0?'+':'')+chg.toFixed(2)+'%'}</td>
       ${cell(fmt(d.mcap))}
       ${cell(fmt(d.fdv))}
-      <td style="padding:12px 8px;vertical-align:middle">${(d.mcap && d.fdv && d.fdv > 0) ? `<div style="display:flex;align-items:center;gap:5px"><div style="width:36px;height:3px;background:var(--parchment);border-radius:2px;overflow:hidden;flex-shrink:0"><div style="width:${Math.min(100,(d.mcap/d.fdv)*100).toFixed(1)}%;height:100%;background:var(--sienna);border-radius:2px"></div></div><span style="font-family:var(--mono);font-size:9px;color:var(--sand);white-space:nowrap">${((d.mcap/d.fdv)*100).toFixed(0)}%</span></div>` : ''}</td>
+      <td style="padding:12px 8px;vertical-align:middle">
+        ${(d.mcap && d.fdv && d.fdv > 0) ? `
+        <div style="display:flex;align-items:center;gap:5px">
+          <div title="Mcap/FDV = ${((d.mcap/d.fdv)*100).toFixed(0)}%" style="width:36px;height:3px;background:var(--parchment);border-radius:2px;overflow:hidden;flex-shrink:0">
+            <div style="width:${Math.min(100,(d.mcap/d.fdv)*100).toFixed(1)}%;height:100%;background:var(--sienna);border-radius:2px"></div>
+          </div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--sand);white-space:nowrap">${((d.mcap/d.fdv)*100).toFixed(0)}%</span>
+        </div>
+        ` : ''}
+      </td>
+
       ${cell(fmt(d.rev?.rev30d))}
       ${cell(fmt(d.rev?.revAnn))}
-      ${pe != null ? `<td class="num"><span style="font-weight:500;color:${pe < 10 ? '#16a34a' : pe < 25 ? '#ca8a04' : '#dc2626'};background:${pe < 10 ? 'rgba(22,163,74,0.1)' : pe < 25 ? 'rgba(202,138,4,0.1)' : 'rgba(220,38,38,0.1)'};padding:2px 6px;border-radius:4px">${pe.toFixed(1)}x</span></td>` : `<td class="na">—</td>`}
-      ${fdve != null ? `<td class="num"><span style="font-weight:500;color:${fdve < 10 ? '#16a34a' : fdve < 25 ? '#ca8a04' : '#dc2626'};background:${fdve < 10 ? 'rgba(22,163,74,0.1)' : fdve < 25 ? 'rgba(202,138,4,0.1)' : 'rgba(220,38,38,0.1)'};padding:2px 6px;border-radius:4px">${fdve.toFixed(1)}x</span></td>` : `<td class="na">—</td>`}
+      ${pe != null ? `<td class="num"><span style="font-weight:500;color:${
+        pe < 10 ? '#16a34a' : pe < 25 ? '#ca8a04' : '#dc2626'
+      };background:${
+        pe < 10 ? 'rgba(22,163,74,0.1)' : pe < 25 ? 'rgba(202,138,4,0.1)' : 'rgba(220,38,38,0.1)'
+      };padding:2px 6px;border-radius:4px">${pe.toFixed(1)}x</span></td>` : `<td class="na">—</td>`}
+      ${fdve != null ? `<td class="num"><span style="font-weight:500;color:${
+        fdve < 10 ? '#16a34a' : fdve < 25 ? '#ca8a04' : '#dc2626'
+      };background:${
+        fdve < 10 ? 'rgba(22,163,74,0.1)' : fdve < 25 ? 'rgba(202,138,4,0.1)' : 'rgba(220,38,38,0.1)'
+      };padding:2px 6px;border-radius:4px">${fdve.toFixed(1)}x</span></td>` : `<td class="na">—</td>`}
       ${_valCell}
     `;
     tr.addEventListener('click', () => {
-      const isOpen = d._idx === selectedCoinIdx;
+      const isOpen = d._idx === selectedCoinIdx; // capture before reset
+
+      // Update all toggle icons
       document.querySelectorAll('tbody tr.coin-row .row-toggle').forEach(s => s.textContent = '+');
+      // Close any open detail row
       document.querySelectorAll('tbody tr.coin-row').forEach(r => r.classList.remove('selected-coin'));
       document.querySelectorAll('tr.coin-detail-row').forEach(r => r.remove());
+
       selectedCoinIdx = null;
-      if (isOpen) return;
+
+      if (isOpen) return; // toggle off — was already open
+
+      // Open new detail row below
       selectedCoinIdx = d._idx;
       tr.classList.add('selected-coin');
-      tr.querySelector('.row-toggle').textContent = '×';
+      const toggleIcon = tr.querySelector('.row-toggle');
+      if (toggleIcon) toggleIcon.textContent = '×';
+
       const detailRow = document.createElement('tr');
       detailRow.className = 'coin-detail-row';
       const canvasId = 'detail-canvas-' + d._idx;
       const zoneId = 'zone-toggle-' + d._idx;
-      detailRow.innerHTML = `<td colspan="12" style="padding:12px 0;background:var(--cream);border-bottom:var(--border)"><div style="margin:0;border:var(--border);border-radius:6px;background:var(--white);padding:20px 24px;display:flex;flex-direction:column;gap:14px"><div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:16px"><span style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em">Price · P/E — ${d.name}</span><span style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--sienna)"><span style="width:8px;height:8px;border-radius:50%;background:${getCoinColor(d,d._idx)};display:inline-block"></span>Price</span><span style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--sienna)"><span style="width:12px;height:2px;background:repeating-linear-gradient(90deg,#9A7B5A 0 3px,transparent 3px 6px);display:inline-block"></span>P/E</span></div><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:var(--mono);font-size:9px;color:var(--sienna);user-select:none"><input type="checkbox" id="${zoneId}" style="accent-color:var(--umber);cursor:pointer" />Buy zones</label></div><div style="position:relative;height:340px"><canvas id="${canvasId}" style="position:absolute;inset:0;width:100%;height:100%"></canvas></div></div></td>`;
+      detailRow.innerHTML = `
+        <td colspan="12" style="padding:12px 0;background:var(--cream);border-bottom:var(--border)">
+          <div style="margin:0 0;border:var(--border);border-radius:6px;background:var(--white);padding:20px 24px 24px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:16px">
+                <span style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em">Price · P/E — ${d.name}</span>
+                <span style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--sienna)">
+                  <span style="width:8px;height:8px;border-radius:50%;background:${getCoinColor(d,d._idx)};display:inline-block"></span>Price
+                </span>
+                <span style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--sienna)">
+                  <span style="width:12px;height:2px;background:repeating-linear-gradient(90deg,#9A7B5A 0 3px,transparent 3px 6px);display:inline-block"></span>P/E
+                </span>
+              </div>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:var(--mono);font-size:9px;color:var(--sienna);user-select:none">
+                <input type="checkbox" id="${zoneId}" style="accent-color:var(--umber);cursor:pointer" />
+                Buy zones
+              </label>
+            </div>
+            <div style="position:relative;height:340px">
+              <canvas id="${canvasId}" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+            </div>
+          </div>
+        </td>`;
+
       tr.insertAdjacentElement('afterend', detailRow);
+      // Buy zone toggle
       const zoneChk = detailRow.querySelector('#' + zoneId);
-      zoneChk.addEventListener('change', () => buildCoinDetailChart(d, canvasId, zoneChk.checked, globalDays));
+      if (zoneChk) {
+        zoneChk.addEventListener('change', () => {
+          buildCoinDetailChart(d, canvasId, zoneChk.checked, globalDays);
+        });
+      }
+      // Small delay ensures the row is visible before Chart.js measures canvas
+      // ResizeObserver fires when canvas has real dimensions
       const canvasEl = detailRow.querySelector('canvas');
-      const obs = new ResizeObserver(() => { if (canvasEl.offsetWidth > 0) { obs.disconnect(); buildCoinDetailChart(d, canvasId, false, globalDays); } });
-      obs.observe(canvasEl);
+      if (canvasEl) {
+        const obs = new ResizeObserver(() => {
+          if (canvasEl.offsetWidth > 0) { obs.disconnect(); buildCoinDetailChart(d, canvasId, false, globalDays); }
+        });
+        obs.observe(canvasEl);
+      } else {
+        setTimeout(() => buildCoinDetailChart(d, canvasId, false, globalDays), 150);
+      }
     });
     tbody.appendChild(tr);
   });
@@ -557,9 +698,14 @@ function initSort() {
   document.querySelectorAll('thead th.sortable').forEach(th => {
     th.addEventListener('click', () => {
       const key = th.dataset.key;
-      sortDir = sortKey === key ? (sortDir === 'desc' ? 'asc' : 'desc') : (key === 'pe' || key === 'fdve' ? 'asc' : 'desc');
+      sortDir = sortKey === key
+        ? (sortDir === 'desc' ? 'asc' : 'desc')
+        : (key === 'pe' || key === 'fdve' ? 'asc' : 'desc');
       sortKey = key;
-      document.querySelectorAll('thead th.sortable').forEach(t => { t.classList.remove('sort-active','sort-asc','sort-desc'); t.querySelector('.sort-icon').textContent = ''; });
+      document.querySelectorAll('thead th.sortable').forEach(t => {
+        t.classList.remove('sort-active','sort-asc','sort-desc');
+        t.querySelector('.sort-icon').textContent = '';
+      });
       th.classList.add('sort-active', 'sort-'+sortDir);
       th.querySelector('.sort-icon').textContent = sortDir==='desc' ? '↓' : '↑';
       renderTable();
@@ -567,16 +713,17 @@ function initSort() {
   });
 }
 
+// ── Compare : coin selector ───────────────────────────────────────────────────
 function buildCoinSelector() {
   const container = document.getElementById('coin-selector');
-  container.innerHTML = '';
+  container.innerHTML = ''; // vider avant de reconstruire
   allData.forEach((d, i) => {
     const chip = document.createElement('div');
     chip.className = 'coin-chip' + (selectedCoins.has(d._idx) ? ' active' : '');
     const color = getCoinColor(d, i);
     chip.style.borderColor = selectedCoins.has(d._idx) ? color : '';
-    chip.style.background = selectedCoins.has(d._idx) ? color + '22' : '';
-    chip.style.color = selectedCoins.has(d._idx) ? color : '';
+    chip.style.background  = selectedCoins.has(d._idx) ? color + '22' : '';
+    chip.style.color       = selectedCoins.has(d._idx) ? color : '';
     chip.innerHTML = `<img src="${d.logo||''}" alt=""/>${d.symbol}`;
     chip.addEventListener('click', () => {
       if (selectedCoins.has(d._idx)) selectedCoins.delete(d._idx);
@@ -588,121 +735,363 @@ function buildCoinSelector() {
   });
 }
 
+// ── Compare : chart ───────────────────────────────────────────────────────────
 function getMetricSeries(d, metric, days) {
   const cutoff = Date.now() - days * 86400000;
+
+
   if (metric === 'rev30d') {
-    const rh = (d.rev?.history || []).filter(([ts]) => ts >= cutoff);
-    const data = rh.map(([ts]) => {
+    if (!d.rev?.history?.length) return { labels: [], data: [] };
+    const rh  = d.rev.history.filter(([ts]) => ts >= cutoff);
+    const use = rh.length >= 2 ? rh : d.rev.history.slice(-Math.min(days, d.rev.history.length));
+    // Rolling 30j
+    const data = use.map(([ts, ]) => {
       const w = d.rev.history.filter(([t]) => t >= ts - 30*86400000 && t <= ts);
       return w.length >= 3 ? +w.reduce((s,[,v])=>s+v,0).toFixed(0) : null;
     });
-    return { labels: rh.map(([ts]) => new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' })), data };
+    return {
+      labels: use.map(([ts]) => new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' })),
+      data,
+    };
   }
+
   if (metric === 'pe') {
-    const src = (d.prices || []).filter(([ts]) => ts >= cutoff);
+    if (!d.prices?.length || !d.mcap || !d.rev?.history?.length) return { labels: [], data: [] };
+    const src = d.prices.filter(([ts]) => ts >= cutoff);
+    const use = src.length >= 2 ? src : d.prices.slice(-Math.min(days, d.prices.length));
     const pNow = d.prices[d.prices.length - 1]?.[1] || 1;
-    const data = src.map(([ts, prix]) => {
+    const data = use.map(([ts, prix]) => {
       const w = d.rev.history.filter(([t]) => t >= ts - 30*86400000 && t <= ts);
       if (w.length < 3) return null;
       const revAnn = w.reduce((s,[,v])=>s+v,0) * 12;
-      return revAnn > 0 ? +((d.mcap * (prix/pNow)) / revAnn).toFixed(2) : null;
+      if (revAnn <= 0) return null;
+      return +((d.mcap * (prix / pNow)) / revAnn).toFixed(2);
     });
-    return { labels: src.map(([ts]) => new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' })), data };
+    return {
+      labels: use.map(([ts]) => new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' })),
+      data,
+    };
   }
   if (metric === 'rev_daily') {
-    const rh = (d.rev?.history || []).filter(([ts]) => ts >= cutoff);
-    return { labels: rh.map(([ts]) => new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' })), data: rh.map(([, v]) => v || 0) };
+    if (!d.rev?.history?.length) return { labels: [], data: [] };
+    const rh  = d.rev.history.filter(([ts]) => ts >= cutoff);
+    const use = rh.length >= 2 ? rh : d.rev.history.slice(-Math.min(days, d.rev.history.length));
+    return {
+      labels: use.map(([ts]) => new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' })),
+      data:   use.map(([, v]) => v || 0),
+    };
   }
   return { labels: [], data: [] };
 }
 
 function makeCompareChart(canvasId, legendId, metric, active, existingChart, days) {
+  days = days || globalDays;
   const legend = document.getElementById(legendId);
   legend.innerHTML = '';
-  const isDaily = metric === 'rev_daily';
-  const isRevFlag = metric === 'rev30d' || metric === 'rev_daily';
-  const tickCb = isRevFlag ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
-  const ttCb = isRevFlag ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
-  const cutoff = Date.now() - days * 86400000;
-  const tsRaw = new Set();
-  active.forEach(d => { (d.prices || []).filter(([ts]) => ts >= cutoff).forEach(([ts]) => tsRaw.add(Math.round(ts/86400000)*86400000)); });
-  const sortedTs = Array.from(tsRaw).sort((a,b)=>a-b);
-  const sharedLabels = sortedTs.map(ts => new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' }));
 
-  const datasets = active.map(d => {
+  const isDaily   = metric === 'rev_daily';
+  const isRevFlag = metric === 'rev30d' || metric === 'rev_daily';
+  const tickCb    = isRevFlag ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
+  const ttCb      = isRevFlag ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
+
+  // Filter coins with sufficient data
+  const filtered = metric === 'pe'
+    ? active.filter(d => d.rev?.history?.length >= 5 && d.mcap)
+    : active.filter(d => d.rev?.history?.length >= 3);
+  const useActive = filtered.length ? filtered : [];
+
+  // Build common timestamp-based X axis
+  const cutoff = Date.now() - days * 86400000;
+
+  // Collect raw timestamps, build sorted unique date list, format them
+  const tsRaw = new Set();
+  useActive.forEach(d => {
+    const src = (d.prices || []).filter(([ts]) => ts >= cutoff);
+    const use = src.length >= 2 ? src : (d.prices || []).slice(-Math.min(days, (d.prices||[]).length));
+    use.forEach(([ts]) => tsRaw.add(Math.round(ts / 86400000) * 86400000)); // round to day
+  });
+  const sortedTs = Array.from(tsRaw).sort((a, b) => a - b);
+  const sharedLabels = sortedTs.map(ts =>
+    new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' })
+  );
+
+  // Map each coin's data onto the shared timeline
+  const datasets = useActive.map(d => {
     const color = getCoinColor(d, d._idx);
-    const use = (d.prices || []).filter(([ts]) => ts >= cutoff);
+    // Build a ts→value map for this coin
+    const src = (d.prices || []).filter(([ts]) => ts >= cutoff);
+    const use = src.length >= 2 ? src : (d.prices || []).slice(-Math.min(days, (d.prices||[]).length));
     const pNow = use.length ? use[use.length-1][1] || 1 : 1;
+
     const valueMap = new Map();
-    if (metric === 'rev30d') {
-      use.forEach(([ts]) => { const w = d.rev.history.filter(([t]) => t >= ts - 30*86400000 && t <= ts); if (w.length >= 3) valueMap.set(Math.round(ts/86400000)*86400000, +w.reduce((s,[,v])=>s+v,0).toFixed(0)); });
+    if (metric === 'price') {
+      use.forEach(([ts, p]) => { valueMap.set(Math.round(ts/86400000)*86400000, p); });
+    } else if (metric === 'rev30d') {
+      const rh = d.rev?.history || [];
+      use.forEach(([ts]) => {
+        const dayTs = Math.round(ts/86400000)*86400000;
+        const w = rh.filter(([t]) => t >= ts - 30*86400000 && t <= ts);
+        if (w.length >= 3) valueMap.set(dayTs, +w.reduce((s,[,v])=>s+v,0).toFixed(0));
+      });
     } else if (metric === 'pe') {
-      use.forEach(([ts, prix]) => { const w = d.rev.history.filter(([t]) => t >= ts - 30*86400000 && t <= ts); if (w.length >= 3) { const ra = w.reduce((s,[,v])=>s+v,0)*12; if (ra>0) valueMap.set(Math.round(ts/86400000)*86400000, +((d.mcap*(prix/pNow))/ra).toFixed(2)); } });
+      const rh = d.rev?.history || [];
+      use.forEach(([ts, prix]) => {
+        const dayTs = Math.round(ts/86400000)*86400000;
+        const w = rh.filter(([t]) => t >= ts - 30*86400000 && t <= ts);
+        if (w.length < 3) return;
+        const revAnn = w.reduce((s,[,v])=>s+v,0) * 12;
+        if (revAnn <= 0) return;
+        valueMap.set(dayTs, +((d.mcap * (prix/pNow)) / revAnn).toFixed(2));
+      });
     } else if (metric === 'rev_daily') {
-      (d.rev?.history || []).filter(([ts]) => ts >= cutoff).forEach(([ts, v]) => valueMap.set(Math.round(ts/86400000)*86400000, v||0));
+      const rh = d.rev?.history || [];
+      rh.filter(([ts]) => ts >= cutoff).forEach(([ts, v]) => {
+        valueMap.set(Math.round(ts/86400000)*86400000, v||0);
+      });
     }
-    return { label: d.symbol, data: sortedTs.map(ts => valueMap.get(ts) ?? null), borderColor: color, backgroundColor: isDaily ? color : 'transparent', borderWidth: isDaily ? 0 : 1.5, pointRadius: 0, tension: 0.35, spanGaps: true };
+
+    // Map onto shared timeline — null for missing dates
+    const data = sortedTs.map(ts => valueMap.has(ts) ? valueMap.get(ts) : null);
+
+    return {
+      label: d.symbol, data, borderColor: color,
+      backgroundColor: 'transparent',
+      borderWidth: 1.5, pointRadius: 0, tension: 0.35, spanGaps: true,
+    };
   });
 
-  active.forEach(d => { const item = document.createElement('div'); item.className = 'compare-legend-item'; item.innerHTML = `<span class="compare-legend-dot" style="background:${getCoinColor(d,d._idx)}"></span>${d.name}`; legend.appendChild(item); });
+  // Override allLabels with shared ones
+  const allLabels = sharedLabels;
 
+  // Bar datasets (daily rev — filled solid)
+  const barDatasets = useActive.map(d => {
+    const barColor = getCoinColor(d, d._idx);
+    const { data } = getMetricSeries(d, metric, days);
+    return {
+      label: d.symbol, data,
+      backgroundColor: barColor,
+      borderColor: 'transparent',
+      borderWidth: 0, borderRadius: 2, borderSkipped: false,
+    };
+  });
+
+  // Build legend
+  useActive.forEach(d => {
+    const item = document.createElement('div');
+    item.className = 'compare-legend-item';
+    item.innerHTML = `<span class="compare-legend-dot" style="background:${getCoinColor(d,d._idx)}"></span>${d.name}`;
+    legend.appendChild(item);
+  });
+
+  // Update existing chart in-place
   if (existingChart) {
-    existingChart.data.labels = sharedLabels;
-    existingChart.data.datasets = datasets;
+    existingChart.data.labels   = allLabels;
+    existingChart.data.datasets = isDaily ? barDatasets : datasets;
+    existingChart.options.scales.y.ticks.callback = tickCb;
     existingChart.update('none');
     return existingChart;
   }
 
-  const canvas = document.getElementById(canvasId);
-  return new Chart(canvas, {
+  // First creation — fresh canvas
+  const oldCanvas = document.getElementById(canvasId);
+  if (!oldCanvas) return null;
+  const wrapper = oldCanvas.parentElement;
+  oldCanvas.remove();
+  const canvas = document.createElement('canvas');
+  canvas.id = canvasId;
+  canvas.setAttribute('role', 'img');
+  wrapper.appendChild(canvas);
+  if (!useActive.length) return null;
+
+  const endLabelsPlugin = {
+    id: 'endLabels-' + canvasId,
+    afterDraw(chart) {
+      if (isDaily) return;
+      const ctx  = chart.ctx;
+      const area = chart.chartArea;
+      const LINE_H = 15; // min vertical gap between labels
+      // Collect
+      const items = [];
+      chart.data.datasets.forEach((ds) => {
+        const meta   = chart.getDatasetMeta(chart.data.datasets.indexOf(ds));
+        if (meta.hidden) return;
+        const visPts = meta.data.filter(p => p && isFinite(p.x) && isFinite(p.y));
+        if (!visPts.length) return;
+        const last   = visPts[visPts.length - 1];
+        const valArr = ds.data.filter(v => v != null && isFinite(v));
+        if (!valArr.length) return;
+        const val    = valArr[valArr.length - 1];
+        const label = isRevFlag ? (fmt(val)||'') : val.toFixed(1) + 'x';
+        items.push({ label, color: ds.borderColor, x: last.x, y: last.y });
+      });
+      if (!items.length) return;
+      // Sort by y descending, then spread apart
+      items.sort((a, b) => a.y - b.y);
+      // Forward pass: push down
+      for (let j = 1; j < items.length; j++) {
+        if (items[j].y < items[j-1].y + LINE_H)
+          items[j].y = items[j-1].y + LINE_H;
+      }
+      // Backward pass: pull up if pushed below bottom
+      for (let j = items.length - 2; j >= 0; j--) {
+        if (items[j].y > items[j+1].y - LINE_H)
+          items[j].y = items[j+1].y - LINE_H;
+      }
+      ctx.font = "bold 10px 'DM Mono', monospace";
+      items.forEach(({ label, color, x, y }) => {
+        const w      = ctx.measureText(label).width;
+        const goLeft = x + w + 10 > area.right;
+        const px     = goLeft ? x - w - 5 : x + 5;
+        const py     = Math.max(area.top + 12, Math.min(area.bottom - 3, y));
+        ctx.save();
+        // Background pill
+        ctx.fillStyle = 'rgba(242,237,228,0.9)';
+        ctx.fillRect(px - 3, py - 11, w + 6, 14);
+        ctx.fillStyle = color;
+        ctx.textAlign = 'left';
+        ctx.fillText(label, px, py);
+        ctx.restore();
+      });
+    }
+  };
+
+  const newChart = new Chart(canvas, {
     type: isDaily ? 'bar' : 'line',
-    data: { labels: sharedLabels, datasets },
+    data: { labels: allLabels, datasets: isDaily ? barDatasets : datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#2C2417', titleFont: { family:"'DM Mono',monospace" }, bodyFont: { family:"'DM Mono',monospace" }, callbacks: { label: c => ` ${c.dataset.label}: ${ttCb(c.parsed.y)}` } } },
-      scales: { x: { grid: { color: 'rgba(180,160,130,0.1)' }, ticks: { font:{family:"'DM Mono',monospace",size:9}, color:'#9A7B5A', maxTicksLimit:8 } }, y: { ticks: { font:{family:"'DM Mono',monospace",size:9}, color:'#9A7B5A', callback: tickCb } } }
-    }
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#2C2417',
+          titleFont: { family:"'DM Mono',monospace", size:10 },
+          bodyFont:  { family:"'DM Mono',monospace", size:10 },
+          padding: 10,
+          filter: item => item.parsed.y !== null,
+          callbacks: { label: c => ` ${c.dataset.label}: ${ttCb(c.parsed.y)}` },
+        },
+      },
+      scales: {
+        x: {
+          stacked: false, grid: { color: 'rgba(180,160,130,0.1)' },
+          border: { display: false },
+          ticks: { font:{family:"'DM Mono',monospace",size:9}, color:'#9A7B5A', maxTicksLimit: isDaily ? 10 : 8 },
+        },
+        y: {
+          position: 'left', grid: { color: 'rgba(180,160,130,0.1)' },
+          border: { display: false },
+          ticks: { font:{family:"'DM Mono',monospace",size:9}, color:'#9A7B5A', callback: tickCb },
+        },
+      },
+    },
+    plugins: [endLabelsPlugin],
   });
+
+  // Drill-down click on bar
+  if (isDaily) {
+    canvas.addEventListener('click', (e) => {
+      const pts = newChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+      if (!pts.length) return;
+      const dsIdx  = pts[0].datasetIndex;
+      const barIdx = pts[0].index;
+      const d      = useActive[dsIdx];
+      if (!d) return;
+      const date   = allLabels[barIdx];
+      const barVal = newChart.data.datasets[dsIdx].data[barIdx];
+      let popup = document.getElementById('drill-popup');
+      if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'drill-popup';
+        popup.style.cssText = 'position:fixed;background:#2C2417;color:#F2EDE4;font-family:"DM Mono",monospace;font-size:11px;padding:10px 14px;border-radius:6px;z-index:999;pointer-events:none;transition:opacity .2s';
+        document.body.appendChild(popup);
+      }
+      popup.innerHTML = `<b style="color:${getCoinColor(d,d._idx)}">${d.name}</b><br>${date}<br>Rev: ${fmt(barVal)||'—'}`;
+      popup.style.left    = (e.clientX + 12) + 'px';
+      popup.style.top     = (e.clientY - 10) + 'px';
+      popup.style.opacity = '1';
+      clearTimeout(popup._timer);
+      popup._timer = setTimeout(() => { popup.style.opacity = '0'; }, 2500);
+    });
+  }
+
+  return newChart;
 }
+
 
 function buildCompareChart() {
   const active = allData.filter(d => selectedCoins.has(d._idx));
   if (!active.length) return;
-  compareChartPE = makeCompareChart('compare-chart-pe', 'compare-legend-pe', 'pe', active, compareChartPE, globalDays);
-  compareChartRev = makeCompareChart('compare-chart-rev', 'compare-legend-rev', 'rev30d', active, compareChartRev, revDays);
+
+  compareChartPE    = makeCompareChart('compare-chart-pe',    'compare-legend-pe',    'pe',        active, compareChartPE,    globalDays);
+  compareChartRev   = makeCompareChart('compare-chart-rev',   'compare-legend-rev',   'rev30d',    active, compareChartRev,    revDays);
   compareChartDaily = makeCompareChart('compare-chart-daily', 'compare-legend-daily', 'rev_daily', active, compareChartDaily, dailyDays);
 }
 
+// metric buttons removed — always show both charts
+
+// ── Global filter ─────────────────────────────────────────────────────────────
 document.getElementById('global-filters').querySelectorAll('.tf-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    globalDays = parseInt(btn.dataset.days); revDays = globalDays; dailyDays = globalDays;
-    ['#global-filters', '#header-days-filter', '#rev-filters', '#daily-filters'].forEach(sel => { document.querySelectorAll(sel + ' .tf-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.days) === globalDays)); });
-    buildCompareChart(); redrawOpenDetailCharts();
+    globalDays = parseInt(btn.dataset.days);
+    revDays    = globalDays;
+    dailyDays  = globalDays;
+    ['#global-filters', '#header-days-filter', '#rev-filters', '#daily-filters'].forEach(sel => {
+      document.querySelectorAll(sel + ' .tf-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.days) === globalDays);
+      });
+    });
+    buildCompareChart();
+    redrawOpenDetailCharts();
   });
 });
 
 document.getElementById('header-days-filter').querySelectorAll('.tf-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    globalDays = parseInt(btn.dataset.days); revDays = globalDays; dailyDays = globalDays;
-    ['#global-filters', '#header-days-filter', '#rev-filters', '#daily-filters'].forEach(sel => { document.querySelectorAll(sel + ' .tf-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.days) === globalDays)); });
-    buildCompareChart(); redrawOpenDetailCharts();
+    globalDays = parseInt(btn.dataset.days);
+    revDays    = globalDays;
+    dailyDays  = globalDays;
+    // Sync all filter buttons
+    ['#global-filters', '#header-days-filter', '#rev-filters', '#daily-filters'].forEach(sel => {
+      document.querySelectorAll(sel + ' .tf-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.days) === globalDays);
+      });
+    });
+    buildCompareChart();
+    redrawOpenDetailCharts();
   });
 });
 
+// Rev chart independent filter
 document.addEventListener('click', e => {
   const btn = e.target.closest('#rev-filters .tf-btn');
-  if (btn) { revDays = parseInt(btn.dataset.days); document.querySelectorAll('#rev-filters .tf-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); buildCompareChart(); }
+  if (btn) {
+    revDays = parseInt(btn.dataset.days);
+    document.querySelectorAll('#rev-filters .tf-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const active = allData.filter(d => selectedCoins.has(d._idx));
+    compareChartRev = makeCompareChart('compare-chart-rev', 'compare-legend-rev', 'rev30d', active, compareChartRev, revDays);
+  }
   const btn2 = e.target.closest('#daily-filters .tf-btn');
-  if (btn2) { dailyDays = parseInt(btn2.dataset.days); document.querySelectorAll('#daily-filters .tf-btn').forEach(b => b.classList.remove('active')); btn2.classList.add('active'); buildCompareChart(); }
+  if (btn2) {
+    dailyDays = parseInt(btn2.dataset.days);
+    document.querySelectorAll('#daily-filters .tf-btn').forEach(b => b.classList.remove('active'));
+    btn2.classList.add('active');
+    const active = allData.filter(d => selectedCoins.has(d._idx));
+    compareChartDaily = makeCompareChart('compare-chart-daily', 'compare-legend-daily', 'rev_daily', active, compareChartDaily, dailyDays);
+  }
 });
 
+// ── Init ──────────────────────────────────────────────────────────────────────
 function redrawOpenDetailCharts() {
   document.querySelectorAll('[id^="detail-canvas-"]').forEach(canvas => {
     if (canvas.offsetWidth > 0) {
       const idx = parseInt(canvas.id.replace('detail-canvas-', ''));
       const d = allData.find(x => x._idx === idx);
-      if (d) buildCoinDetailChart(d, canvas.id, document.getElementById('zone-toggle-' + idx)?.checked, globalDays);
+      if (d) {
+        const zoneChk = document.getElementById('zone-toggle-' + idx);
+        buildCoinDetailChart(d, canvas.id, zoneChk?.checked || false, globalDays);
+      }
     }
   });
 }
@@ -710,22 +1099,57 @@ function redrawOpenDetailCharts() {
 async function init() {
   const loadEl = document.getElementById('loading');
   try {
-    const res = await fetch('/api/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(COINS) });
+    // Show progress during fetch
+
+
+    const res = await fetch('/api/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(COINS),
+    });
+
     if (!res.ok) throw new Error('Server HTTP ' + res.status);
     const data = await res.json();
+
     let ok = 0;
-    data.forEach((d, i) => { if (!d.error) { d._idx = i; allData.push(d); ok++; } });
+    data.forEach((d, i) => {
+      if (!d.error) {
+        d._idx = i; allData.push(d); ok++;
+
+      }
+      else console.warn('['+d.cgId+']', d.error);
+    });
+
+    // Par défaut : hyperliquid, pump-fun, aave
     const defaultIds = ['hyperliquid', 'pump-fun', 'syrup'];
-    allData.forEach(d => { if (defaultIds.includes(d.cgId)) selectedCoins.add(d._idx); });
+    allData.forEach(d => {
+      if (defaultIds.includes(d.cgId)) selectedCoins.add(d._idx);
+    });
+
     loadEl.style.display = 'none';
-    initSort(); renderTable(); buildCoinSelector(); buildCompareChart();
+    initSort();
+    renderTable();
+    buildCoinSelector();
+    buildCompareChart(); // compare is default tab
+
+    const updatedEl = document.getElementById('updated');
     const _now = new Date();
-    document.getElementById('update-time').textContent = ok+'/'+COINS.length+' coins · updated ' + _now.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' ' + _now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('update-time').textContent = ok+'/'+COINS.length+' coins · updated ' +
+      _now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) + ' ' +
+      _now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    if (ok < COINS.length) {
+      const failed = data.filter(d => d.error).map(d => d.cgId).join(', ');
+      console.warn('Failed coins:', failed);
+      updatedEl.title = 'Errors: ' + failed;
+    }
+
   } catch(e) {
-    loadEl.style.cssText = 'animation:none;color:#8B3A3A;padding:60px 0;text-align:center;font-family:var(--mono);';
+    loadEl.style.cssText = 'animation:none;color:#8B3A3A;padding:60px 0;text-align:center;font-family:var(--mono);font-size:12px';
     loadEl.textContent = '❌ ' + e.message;
+    console.error(e);
   }
 }
+
 init();
 </script>
 </body>
