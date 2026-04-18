@@ -107,7 +107,7 @@
     tbody tr.coin-row { border-bottom: var(--border); cursor: default; transition: background .12s; }
     tbody tr.coin-row:hover { background: var(--cream2); }
     tbody tr.selected-coin { background: var(--cream2); }
-    tbody td { padding: 12px 10px; vertical-align: middle; height: 52px; }
+    tbody td { padding: 12px 10px; vertical-align: middle; }
 
     td.td-name { display: flex; align-items: center; gap: 10px; }
     .coin-logo { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; background: var(--cream2); }
@@ -570,7 +570,7 @@ function computeValuation(d) {
 
 function renderTable() {
   const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
+  tbody.innerHTML = '<tr style="height:8px"><td colspan="13"></td></tr>';
   const sorted = [...allData].sort((a, b) => {
     const av = getSortVal(a, sortKey), bv = getSortVal(b, sortKey);
     if (av ===  Infinity && bv ===  Infinity) return 0;
