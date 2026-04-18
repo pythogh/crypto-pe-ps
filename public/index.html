@@ -386,6 +386,12 @@ function buildCoinDetailChart(d) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
+  // Explicitly set pixel dimensions before Chart.js renders
+  const parent = canvas.parentElement;
+  const w = parent.clientWidth || parent.offsetWidth || 900;
+  const h = parent.clientHeight || parent.offsetHeight || 220;
+  if (w > 0) { canvas.width = w; canvas.height = h; }
+
   coinDetailChart = new Chart(canvas, {
     type: 'line',
     data: { labels, datasets },
