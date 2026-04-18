@@ -100,7 +100,7 @@
     tbody td { padding: 12px 10px; vertical-align: middle; }
 
     td.td-name { display: flex; align-items: center; gap: 10px; }
-    .coin-logo { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; background: var(--cream2); }
+    .coin-logo { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; background: var(--cream2); }
     .coin-name { font-weight: 500; font-size: 15px; line-height: 1.2; }
     .coin-sym  { font-family: var(--mono); font-size: 10px; color: var(--sienna); letter-spacing: .05em; }
 
@@ -384,6 +384,13 @@ function buildCoinDetailChart(d, canvasId) {
 
   if (coinDetailChart) { coinDetailChart.destroy(); coinDetailChart = null; }
 
+  // Force canvas dimensions so Chart.js renders correctly in a newly visible row
+  const wrapper = canvas.parentElement;
+  canvas.style.width  = '100%';
+  canvas.style.height = '100%';
+  canvas.width  = wrapper.offsetWidth  || 800;
+  canvas.height = wrapper.offsetHeight || 220;
+
   coinDetailChart = new Chart(canvas, {
     type: 'line',
     data: { labels, datasets },
@@ -525,7 +532,7 @@ function buildCoinDetailChart(d, canvasId) {
     tbody td { padding: 12px 10px; vertical-align: middle; }
 
     td.td-name { display: flex; align-items: center; gap: 10px; }
-    .coin-logo { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; background: var(--cream2); }
+    .coin-logo { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; background: var(--cream2); }
     .coin-name { font-weight: 500; font-size: 15px; line-height: 1.2; }
     .coin-sym  { font-family: var(--mono); font-size: 10px; color: var(--sienna); letter-spacing: .05em; }
 
@@ -990,7 +997,8 @@ function renderTable() {
         </td>`;
 
       tr.insertAdjacentElement('afterend', detailRow);
-      setTimeout(() => buildCoinDetailChart(d, canvasId), 20);
+      // Small delay ensures the row is visible before Chart.js measures canvas
+      setTimeout(() => buildCoinDetailChart(d, canvasId), 60);
     });
     tbody.appendChild(tr);
   });
