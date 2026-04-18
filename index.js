@@ -202,10 +202,10 @@ const DEFAULT_COINS = [
   { cgId: 'aerodrome-finance',       llamaSlug: 'aerodrome'     },
   { cgId: 'meteora',                 llamaSlug: 'meteora'       },
   { cgId: 'gmx',                     llamaSlug: 'gmx'           },
-  { cgId: 'fluid',                   llamaSlug: 'fluid'         },
+  { cgId: 'instadapp',               llamaSlug: 'fluid'         },
   { cgId: 'raydium',                 llamaSlug: 'raydium'       },
   { cgId: 'uniswap',                 llamaSlug: 'uniswap'       },
-  { cgId: 'helium',                  llamaSlug: 'helium'        },
+  { cgId: 'helium',                  llamaSlug: 'helium-network'},
   { cgId: 'bluefin',                 llamaSlug: 'bluefin'       },
   { cgId: 'ethena',                  llamaSlug: 'ethena'        },
 ];
