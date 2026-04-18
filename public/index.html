@@ -165,7 +165,7 @@
 
 <header>
   <div class="logo">crypto<em>.</em>pe</div>
-  <div id="updated">Loading…</div>
+  <div id="updated"><span style="color:var(--sienna)">Last update</span> <span id="update-time">—</span></div>
 </header>
 
 <!-- Tabs -->
@@ -618,24 +618,39 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
       if (isDaily) return;
       const ctx  = chart.ctx;
       const area = chart.chartArea;
+      const items = [];
       chart.data.datasets.forEach((ds, i) => {
         const meta = chart.getDatasetMeta(i);
         if (meta.hidden) return;
-        const visiblePts = meta.data.filter(p => p && isFinite(p.x) && isFinite(p.y));
-        if (!visiblePts.length) return;
-        const last = visiblePts[visiblePts.length - 1];
-        const validVals = ds.data.filter(v => v !== null && v !== undefined && isFinite(v));
-        if (!validVals.length) return;
-        const val   = validVals[validVals.length - 1];
+        const pts = meta.data.filter(p => p && isFinite(p.x) && isFinite(p.y));
+        if (!pts.length) return;
+        const last = pts[pts.length - 1];
+        const vals = ds.data.filter(v => v != null && isFinite(v));
+        if (!vals.length) return;
+        const val   = vals[vals.length - 1];
         const label = isRevFlag ? (fmt(val)||'') : val.toFixed(1) + 'x';
+        items.push({ label, color: ds.borderColor, x: last.x, y: last.y });
+      });
+      // Sort by y, push apart overlapping labels
+      items.sort((a, b) => a.y - b.y);
+      for (let i = 1; i < items.length; i++) {
+        if (items[i].y - items[i-1].y < 13) items[i].y = items[i-1].y + 13;
+      }
+      ctx.font = "bold 10px 'DM Mono', monospace";
+      items.forEach(({ label, color, x, y }) => {
+        const w     = ctx.measureText(label).width;
+        const goLeft = x + w + 8 > area.right;
+        const px    = goLeft ? x - w - 6 : x + 5;
+        // Stagger each label vertically by dataset index to avoid overlap
+        const rawPy = Math.max(area.top + 14, Math.min(area.bottom - 4, y));
+        const py    = rawPy + (i * 14) % 42;
         ctx.save();
-        ctx.font      = "bold 10px 'DM Mono', monospace";
-        ctx.fillStyle = ds.borderColor;
-        const w = ctx.measureText(label).width;
-        const x = last.x + w + 8 > area.right ? last.x - w - 6 : last.x + 5;
-        const y = Math.max(area.top + 10, Math.min(area.bottom - 4, last.y + 4));
-        ctx.textAlign = last.x + w + 8 > area.right ? 'right' : 'left';
-        ctx.fillText(label, x, y);
+        // Background pill for readability
+        ctx.fillStyle = 'rgba(242,237,228,0.85)';
+        ctx.fillRect(goLeft ? px - 2 : px - 2, py - 11, w + 4, 14);
+        ctx.fillStyle = color;
+        ctx.textAlign = goLeft ? 'right' : 'left';
+        ctx.fillText(label, px, py);
         ctx.restore();
       });
     }
@@ -791,7 +806,10 @@ async function init() {
     buildCoinSelector();
     document.getElementById('tab-tableau').classList.add('active');
     const updatedEl = document.getElementById('updated');
-    updatedEl.textContent = ok+'/'+COINS.length+' coins · '+new Date().toLocaleTimeString('en-GB');
+    const _now = new Date();
+    updatedEl.textContent = ok+'/'+COINS.length+' coins · updated ' +
+      _now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) + ' ' +
+      _now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
     if (ok < COINS.length) {
       const failed = data.filter(d => d.error).map(d => d.cgId).join(', ');
       console.warn('Failed coins:', failed);
