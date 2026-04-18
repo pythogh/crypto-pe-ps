@@ -96,6 +96,7 @@
 
     tbody tr.coin-row { border-bottom: var(--border); cursor: default; transition: background .12s; }
     tbody tr.coin-row:hover { background: var(--cream2); }
+    tbody tr.selected-coin { background: var(--cream2); border-left: 2px solid var(--orange); }
     tbody td { padding: 12px 10px; vertical-align: middle; }
 
     td.td-name { display: flex; align-items: center; gap: 10px; }
@@ -186,6 +187,24 @@
   <div style="font-family:var(--mono);font-size:10px;color:var(--sienna);margin-bottom:14px">
     Rev. ann. = Rev. 30d × 12
   </div>
+
+  <!-- Single coin chart -->
+  <div id="coin-chart-section" style="margin-bottom:20px;background:var(--white);border:var(--border);border-radius:6px;padding:16px 20px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <img id="coin-chart-logo" style="width:22px;height:22px;border-radius:50%;background:var(--cream2)" src="" alt=""/>
+        <span id="coin-chart-name" style="font-family:var(--mono);font-size:11px;color:var(--sienna);text-transform:uppercase;letter-spacing:.07em">—</span>
+      </div>
+      <div style="display:flex;gap:16px;font-family:var(--mono);font-size:10px;color:var(--sienna)">
+        <span><span id="coin-chart-price" style="color:var(--ink);font-weight:500">—</span>&nbsp;price</span>
+        <span><span id="coin-chart-pe" style="color:var(--orange);font-weight:500">—</span>&nbsp;p/e</span>
+      </div>
+    </div>
+    <div style="position:relative;height:190px">
+      <canvas id="coin-detail-chart" role="img" aria-label="Price and P/E for selected coin"></canvas>
+    </div>
+  </div>
+
   <table>
     <thead>
       <tr>
@@ -338,6 +357,94 @@ let selectedCoins   = new Set();
 let compareChartRev   = null;
 let compareChartPE    = null;
 let compareChartDaily = null;
+let coinDetailChart   = null;
+let selectedCoinIdx   = null;
+
+function buildCoinDetailChart(d) {
+  if (!d || !d.prices?.length) return;
+
+  // Update header
+  document.getElementById('coin-chart-logo').src  = d.logo || '';
+  document.getElementById('coin-chart-name').textContent = d.symbol || d.name;
+  const pe = d.rev?.revAnn > 0 && d.mcap ? (d.mcap / d.rev.revAnn).toFixed(1) + 'x' : '—';
+  document.getElementById('coin-chart-price').textContent = fmtP(d.price) || '—';
+  document.getElementById('coin-chart-pe').textContent    = pe;
+
+  const days = 365;
+  const cutoff = Date.now() - days * 86400000;
+  const src    = d.prices.filter(([ts]) => ts >= cutoff);
+  const use    = src.length >= 2 ? src : d.prices;
+  const labels = use.map(([ts]) => new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' }));
+  const prices = use.map(([,p]) => p);
+  const pNow   = prices[prices.length - 1] || 1;
+
+  // P/E series
+  let peArr = null;
+  if (d.rev?.history?.length && d.mcap) {
+    const rh = d.rev.history;
+    const tmp = use.map(([ts, price]) => {
+      const w = rh.filter(([t]) => t >= ts - 30*86400000 && t <= ts);
+      if (w.length < 3) return null;
+      const revAnn = w.reduce((s,[,v])=>s+v,0) * 12;
+      return revAnn > 0 ? +((d.mcap * (price/pNow)) / revAnn).toFixed(2) : null;
+    });
+    if (tmp.filter(v=>v!==null).length >= use.length * 0.3) peArr = tmp;
+  }
+
+  const datasets = [{
+    label: 'Price', data: prices, yAxisID: 'yP',
+    borderColor: getCoinColor(d, d._idx),
+    backgroundColor: getCoinColor(d, d._idx) + '15',
+    borderWidth: 1.5, pointRadius: 0, tension: 0.4, fill: true,
+  }];
+  if (peArr) datasets.push({
+    label: 'P/E', data: peArr, yAxisID: 'yPE',
+    borderColor: '#9A7B5A',
+    backgroundColor: 'transparent',
+    borderWidth: 1.5, borderDash: [3,4], pointRadius: 0, tension: 0.4, spanGaps: true,
+  });
+
+  if (coinDetailChart) { coinDetailChart.destroy(); coinDetailChart = null; }
+  const canvas = document.getElementById('coin-detail-chart');
+  if (!canvas) return;
+
+  coinDetailChart = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#2C2417',
+          titleFont: { family:"'DM Mono',monospace", size:9 },
+          bodyFont:  { family:"'DM Mono',monospace", size:10 },
+          padding: 9,
+          callbacks: {
+            label: c => c.dataset.label === 'Price'
+              ? ' price: ' + (fmtP(c.parsed.y)||'—')
+              : ' p/e: '   + c.parsed.y.toFixed(1) + 'x',
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(180,160,130,0.1)' }, border: { display: false },
+          ticks: { font:{family:"'DM Mono',monospace",size:8}, color:'#9A7B5A', maxTicksLimit:8 },
+        },
+        yP: {
+          position: 'left', grid: { color: 'rgba(180,160,130,0.1)' }, border: { display: false },
+          ticks: { font:{family:"'DM Mono',monospace",size:8}, color: getCoinColor(d, d._idx), callback: v => fmtP(v)||'' },
+        },
+        yPE: {
+          position: 'right', display: !!peArr, grid: { display: false }, border: { display: false },
+          ticks: { font:{family:"'DM Mono',monospace",size:8}, color:'#9A7B5A', callback: v => v.toFixed(0)+'x' },
+        },
+      },
+    },
+  });
+}
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 function fmt(n) {
@@ -407,7 +514,7 @@ function renderTable() {
     const chg  = d.change24h;
 
     const tr = document.createElement('tr');
-    tr.className = 'coin-row';
+    tr.className = 'coin-row' + (d._idx === selectedCoinIdx ? ' selected-coin' : '');
     tr.innerHTML = `
       <td class="td-name">
         <img class="coin-logo" src="${d.logo||''}" alt="" />
@@ -430,13 +537,24 @@ function renderTable() {
 
       ${cell(fmt(d.rev?.rev30d))}
       ${cell(fmt(d.rev?.revAnn))}
-      ${pe != null ? `<td class="num" style="text-align:right;font-weight:500;color:${
+      ${pe != null ? `<td class="num"><span style="font-weight:500;color:${
         pe < 10 ? '#16a34a' : pe < 25 ? '#ca8a04' : pe < 50 ? '#ea580c' : '#dc2626'
-      }">${pe.toFixed(1)}x</td>` : `<td class="na">—</td>`}
-      ${fdve != null ? `<td class="num" style="text-align:right;font-weight:500;color:${
+      };background:${
+        pe < 10 ? 'rgba(22,163,74,0.1)' : pe < 25 ? 'rgba(202,138,4,0.1)' : pe < 50 ? 'rgba(234,88,12,0.1)' : 'rgba(220,38,38,0.1)'
+      };padding:2px 6px;border-radius:4px">${pe.toFixed(1)}x</span></td>` : `<td class="na">—</td>`}
+      ${fdve != null ? `<td class="num"><span style="font-weight:500;color:${
         fdve < 10 ? '#16a34a' : fdve < 25 ? '#ca8a04' : fdve < 50 ? '#ea580c' : '#dc2626'
-      }">${fdve.toFixed(1)}x</td>` : `<td class="na">—</td>`}
+      };background:${
+        fdve < 10 ? 'rgba(22,163,74,0.1)' : fdve < 25 ? 'rgba(202,138,4,0.1)' : fdve < 50 ? 'rgba(234,88,12,0.1)' : 'rgba(220,38,38,0.1)'
+      };padding:2px 6px;border-radius:4px">${fdve.toFixed(1)}x</span></td>` : `<td class="na">—</td>`}
     `;
+    tr.addEventListener('click', () => {
+      selectedCoinIdx = d._idx;
+      buildCoinDetailChart(d);
+      // Update row highlight
+      document.querySelectorAll('tbody tr.coin-row').forEach(r => r.classList.remove('selected-coin'));
+      tr.classList.add('selected-coin');
+    });
     tbody.appendChild(tr);
   });
 }
@@ -812,6 +930,9 @@ async function init() {
     initSort();
     renderTable();
     buildCoinSelector();
+    // Default coin chart: Hyperliquid
+    const defaultCoin = allData.find(d => d.cgId === 'hyperliquid') || allData[0];
+    if (defaultCoin) { selectedCoinIdx = defaultCoin._idx; buildCoinDetailChart(defaultCoin); }
     document.getElementById('tab-tableau').classList.add('active');
     const updatedEl = document.getElementById('updated');
     const _now = new Date();
