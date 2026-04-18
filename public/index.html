@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>token.pe</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -406,6 +407,58 @@ function buildCoinDetailChart(d, canvasId) {
               ? ' price: ' + (fmtP(c.parsed.y)||'—')
               : ' p/e: '   + c.parsed.y.toFixed(1) + 'x',
           },
+        },
+        annotation: {
+          annotations: (() => {
+            const v = computeValuation(d);
+            if (!v || !peArr) return {};
+            return {
+              zCheap: {
+                type: 'box', yScaleID: 'yPE',
+                yMin: 0, yMax: v.p20,
+                backgroundColor: 'rgba(22,163,74,0.06)',
+                borderWidth: 0,
+              },
+              zFair: {
+                type: 'box', yScaleID: 'yPE',
+                yMin: v.p20, yMax: v.p80,
+                backgroundColor: 'rgba(202,138,4,0.05)',
+                borderWidth: 0,
+              },
+              zExpensive: {
+                type: 'box', yScaleID: 'yPE',
+                yMin: v.p80, yMax: v.p80 * 3,
+                backgroundColor: 'rgba(220,38,38,0.05)',
+                borderWidth: 0,
+              },
+              lP20: {
+                type: 'line', yScaleID: 'yPE',
+                yMin: v.p20, yMax: v.p20,
+                borderColor: 'rgba(22,163,74,0.4)',
+                borderWidth: 1, borderDash: [4, 3],
+                label: {
+                  content: 'cheap < ' + v.p20.toFixed(0) + 'x',
+                  display: true, position: 'start',
+                  color: 'rgba(22,163,74,0.7)',
+                  font: { family: "'DM Mono',monospace", size: 8 },
+                  backgroundColor: 'transparent', padding: 2,
+                },
+              },
+              lP80: {
+                type: 'line', yScaleID: 'yPE',
+                yMin: v.p80, yMax: v.p80,
+                borderColor: 'rgba(220,38,38,0.4)',
+                borderWidth: 1, borderDash: [4, 3],
+                label: {
+                  content: 'expensive > ' + v.p80.toFixed(0) + 'x',
+                  display: true, position: 'start',
+                  color: 'rgba(220,38,38,0.7)',
+                  font: { family: "'DM Mono',monospace", size: 8 },
+                  backgroundColor: 'transparent', padding: 2,
+                },
+              },
+            };
+          })(),
         },
       },
       scales: {
