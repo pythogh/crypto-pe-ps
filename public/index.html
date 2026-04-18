@@ -581,7 +581,7 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
   // Update existing chart in-place (avoids flicker)
   if (existingChart) {
     existingChart.data.labels   = allLabels;
-    existingChart.data.datasets = datasets;
+    existingChart.data.datasets = isDaily ? barDatasets : datasets;
     existingChart.options.scales.y.ticks.callback = tickCb;
     existingChart.update('none');
     return existingChart;
