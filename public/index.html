@@ -547,10 +547,10 @@ function renderTable() {
       const canvasId = 'detail-canvas-' + d._idx;
       detailRow.innerHTML = `
         <td colspan="11" style="padding:0;background:var(--white);border-bottom:var(--border)">
-          <div class="detail-panel">
-            <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between">
-              <div class="chart-lbl">Price · P/E — ${d.name}</div>
-              <div class="chart-legend" style="display:flex;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:12px;padding:20px 24px 24px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em">Price · P/E — ${d.name}</div>
+              <div style="display:flex;gap:12px">
                 <span style="font-family:var(--mono);font-size:10px;color:var(--sienna);display:flex;align-items:center;gap:4px">
                   <span style="width:8px;height:8px;border-radius:50%;background:${getCoinColor(d,d._idx)};display:inline-block"></span>Price
                 </span>
@@ -559,8 +559,8 @@ function renderTable() {
                 </span>
               </div>
             </div>
-            <div class="chart-box" style="height:220px;position:relative">
-              <canvas id="${canvasId}"></canvas>
+            <div style="position:relative;height:220px;width:100%">
+              <canvas id="${canvasId}" style="display:block"></canvas>
             </div>
           </div>
         </td>`;
