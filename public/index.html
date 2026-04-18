@@ -382,8 +382,8 @@ function buildCoinDetailChart(d, canvasId, showZones, days) {
   const datasets = [{
     label: 'Price', data: prices, yAxisID: 'yP',
     borderColor: getCoinColor(d, d._idx),
-    backgroundColor: getCoinColor(d, d._idx) + '15',
-    borderWidth: 1.5, pointRadius: 0, tension: 0.4, fill: true,
+    backgroundColor: 'transparent',
+    borderWidth: 1.5, pointRadius: 0, tension: 0.4, fill: false,
   }];
   if (peArr) datasets.push({
     label: 'P/E', data: peArr, yAxisID: 'yPE',
