@@ -235,12 +235,30 @@
       <div class="compare-legend" id="compare-legend-pe"></div>
     </div>
     <div class="compare-chart-wrap">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Rolling 30d revenue</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em">Rolling 30d revenue</div>
+        <div class="time-filters" id="rev-filters">
+          <button class="tf-btn" data-days="7">7d</button>
+          <button class="tf-btn" data-days="30">1m</button>
+          <button class="tf-btn" data-days="90">3m</button>
+          <button class="tf-btn" data-days="180">6m</button>
+          <button class="tf-btn active" data-days="365">1y</button>
+        </div>
+      </div>
       <div class="compare-chart-box"><canvas id="compare-chart-rev" role="img" aria-label="Revenue 30j comparatif"></canvas></div>
       <div class="compare-legend" id="compare-legend-rev"></div>
     </div>
     <div class="compare-chart-wrap">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Daily revenue</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em">Daily revenue</div>
+        <div class="time-filters" id="daily-filters">
+          <button class="tf-btn" data-days="7">7d</button>
+          <button class="tf-btn active" data-days="30">1m</button>
+          <button class="tf-btn" data-days="90">3m</button>
+          <button class="tf-btn" data-days="180">6m</button>
+          <button class="tf-btn" data-days="365">1y</button>
+        </div>
+      </div>
       <div class="compare-chart-box"><canvas id="compare-chart-daily" role="img" aria-label="Daily revenue"></canvas></div>
       <div class="compare-legend" id="compare-legend-daily"></div>
     </div>
@@ -312,7 +330,9 @@ function getCoinColor(d, idx) {
 }
 
 let allData    = [];
-let globalDays = 365;
+let globalDays = 365;  // PE chart
+let revDays    = 365;  // Rolling 30d chart
+let dailyDays  = 30;   // Daily revenue chart
 
 let selectedCoins   = new Set();
 let compareChartRev   = null;
@@ -518,7 +538,8 @@ function getMetricSeries(d, metric, days) {
   return { labels: [], data: [] };
 }
 
-function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
+function makeCompareChart(canvasId, legendId, metric, active, existingChart, days) {
+  days = days || globalDays;
   const legend = document.getElementById(legendId);
   legend.innerHTML = '';
 
@@ -533,13 +554,13 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
   const ttCb        = isRevFlag ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
 
   const allLabels = useActive.reduce((best, d) => {
-    const { labels } = getMetricSeries(d, metric, globalDays);
+    const { labels } = getMetricSeries(d, metric, days);
     return labels.length > best.length ? labels : best;
   }, []);
 
   const datasets = useActive.map(d => {
     const color = getCoinColor(d, d._idx);
-    const { data } = getMetricSeries(d, metric, globalDays);
+    const { data } = getMetricSeries(d, metric, days);
     return {
       label: d.symbol, data, borderColor: color,
       backgroundColor: 'transparent',
@@ -581,7 +602,7 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
   // For bar chart, each dataset needs backgroundColor
   const barDatasets = isDaily ? useActive.map(d => {
     const barColor = getCoinColor(d, d._idx);
-    const { data } = getMetricSeries(d, metric, globalDays);
+    const { data } = getMetricSeries(d, metric, days);
     return {
       label: d.symbol, data,
       backgroundColor: barColor,
@@ -595,22 +616,27 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
     id: 'endLabels-' + canvasId,
     afterDraw(chart) {
       if (isDaily) return;
-      const ctx = chart.ctx;
+      const ctx   = chart.ctx;
+      const area  = chart.chartArea;
       chart.data.datasets.forEach((ds, i) => {
         const meta = chart.getDatasetMeta(i);
         if (meta.hidden) return;
-        const visiblePts = meta.data.filter(p => p && !isNaN(p.x) && !isNaN(p.y));
+        const visiblePts = meta.data.filter(p => p && isFinite(p.x) && isFinite(p.y));
         if (!visiblePts.length) return;
         const last = visiblePts[visiblePts.length - 1];
         const validVals = ds.data.filter(v => v !== null && v !== undefined && isFinite(v));
         if (!validVals.length) return;
-        const val = validVals[validVals.length - 1];
+        const val   = validVals[validVals.length - 1];
         const label = isRevFlag ? (fmt(val)||'') : val.toFixed(1) + 'x';
         ctx.save();
-        ctx.font = "bold 10px 'DM Mono', monospace";
+        ctx.font      = "bold 10px 'DM Mono', monospace";
         ctx.fillStyle = ds.borderColor;
-        ctx.textAlign = 'left';
-        ctx.fillText(label, last.x + 5, last.y + 4);
+        // Draw label INSIDE canvas: if too close to right edge, draw to the left
+        const w = ctx.measureText(label).width;
+        const x = last.x + w + 8 > area.right ? last.x - w - 6 : last.x + 5;
+        const y = Math.max(area.top + 10, Math.min(area.bottom - 4, last.y + 4));
+        ctx.textAlign = last.x + w + 8 > area.right ? 'right' : 'left';
+        ctx.fillText(label, x, y);
         ctx.restore();
       });
     }
@@ -688,9 +714,9 @@ function buildCompareChart() {
   const active = allData.filter(d => selectedCoins.has(d._idx));
   if (!active.length) return;
 
-  compareChartPE    = makeCompareChart('compare-chart-pe',    'compare-legend-pe',    'pe',        active, compareChartPE);
-  compareChartRev   = makeCompareChart('compare-chart-rev',   'compare-legend-rev',   'rev30d',    active, compareChartRev);
-  compareChartDaily = makeCompareChart('compare-chart-daily', 'compare-legend-daily', 'rev_daily', active, compareChartDaily);
+  compareChartPE    = makeCompareChart('compare-chart-pe',    'compare-legend-pe',    'pe',        active, compareChartPE,    globalDays);
+  compareChartRev   = makeCompareChart('compare-chart-rev',   'compare-legend-rev',   'rev30d',    active, compareChartRev,   revDays);
+  compareChartDaily = makeCompareChart('compare-chart-daily', 'compare-legend-daily', 'rev_daily', active, compareChartDaily, dailyDays);
 }
 
 // metric buttons removed — always show both charts
@@ -703,6 +729,26 @@ document.getElementById('global-filters').querySelectorAll('.tf-btn').forEach(bt
     btn.classList.add('active');
     buildCompareChart();
   });
+});
+
+// Rev chart independent filter
+document.addEventListener('click', e => {
+  const btn = e.target.closest('#rev-filters .tf-btn');
+  if (btn) {
+    revDays = parseInt(btn.dataset.days);
+    document.querySelectorAll('#rev-filters .tf-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const active = allData.filter(d => selectedCoins.has(d._idx));
+    compareChartRev = makeCompareChart('compare-chart-rev', 'compare-legend-rev', 'rev30d', active, compareChartRev, revDays);
+  }
+  const btn2 = e.target.closest('#daily-filters .tf-btn');
+  if (btn2) {
+    dailyDays = parseInt(btn2.dataset.days);
+    document.querySelectorAll('#daily-filters .tf-btn').forEach(b => b.classList.remove('active'));
+    btn2.classList.add('active');
+    const active = allData.filter(d => selectedCoins.has(d._idx));
+    compareChartDaily = makeCompareChart('compare-chart-daily', 'compare-legend-daily', 'rev_daily', active, compareChartDaily, dailyDays);
+  }
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
