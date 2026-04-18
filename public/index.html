@@ -28,12 +28,16 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--cream); color: var(--ink); font-family: var(--serif);
-      padding: 36px 28px 60px; max-width: 1060px; margin: 0 auto;
+      padding: 0 28px 60px; max-width: 1060px; margin: 0 auto;
     }
 
     header {
-      display: flex; justify-content: space-between; align-items: baseline;
-      padding-bottom: 16px; border-bottom: var(--border); margin-bottom: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0 14px;
+      border-bottom: var(--border);
+      background: var(--cream);
+      position: sticky; top: 0; z-index: 100;
+      margin-bottom: 0;
     }
     .logo { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
     .logo em { color: var(--orange); font-style: normal; }
@@ -43,6 +47,8 @@
     .tabs {
       display: flex; gap: 0; margin-bottom: 24px;
       border-bottom: var(--border);
+      position: sticky; top: 57px; z-index: 99;
+      background: var(--cream);
     }
     .tab-btn {
       font-family: var(--mono); font-size: 11px; text-transform: uppercase;
@@ -88,6 +94,7 @@
       font-family: var(--mono); font-size: 10px; text-transform: uppercase;
       letter-spacing: .07em; color: var(--sienna); padding: 18px 10px 12px;
       text-align: right; border-bottom: var(--border); font-weight: 400; white-space: nowrap;
+      position: sticky; top: 113px; background: var(--cream); z-index: 98;
     }
     thead th:first-child { text-align: left; }
     thead th.sortable { cursor: pointer; user-select: none; transition: color .15s; }
