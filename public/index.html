@@ -46,9 +46,9 @@
 
     /* ── Tabs ── */
     .tabs {
-      display: flex; gap: 0; margin-bottom: 0;
+      display: flex; gap: 0; margin-bottom: 0; padding-top: 10px;
       border-bottom: var(--border);
-      position: sticky; top: 67px; z-index: 99;
+      position: sticky; top: 72px; z-index: 99;
       background: var(--cream);
       box-shadow: 0 8px 0 8px var(--cream);
     }
@@ -96,7 +96,7 @@
       font-family: var(--mono); font-size: 10px; text-transform: uppercase;
       letter-spacing: .07em; color: var(--sienna); padding: 18px 10px 12px;
       text-align: right; border-bottom: var(--border); font-weight: 400; white-space: nowrap;
-      position: sticky; top: 157px; background: var(--cream); z-index: 97; box-shadow: 0 1px 0 var(--parchment), 0 6px 0 6px var(--cream);
+      position: sticky; top: 172px; background: var(--cream); z-index: 97; box-shadow: 0 1px 0 var(--parchment), 0 6px 0 6px var(--cream);
     }
     thead th:first-child { text-align: left; }
     thead th.sortable { cursor: pointer; user-select: none; transition: color .15s; }
@@ -191,7 +191,7 @@
 
 <!-- ── TAB : Tableau ── -->
 <div class="tab-pane" id="tab-tableau">
-  <div style="position:sticky;top:110px;z-index:98;background:var(--cream);padding:12px 0 10px;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;border-bottom:var(--border);box-shadow:0 8px 0 8px var(--cream)">
+  <div style="position:sticky;top:124px;z-index:98;background:var(--cream);padding:12px 0 10px;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;border-bottom:var(--border);box-shadow:0 8px 0 8px var(--cream)">
     <div style="font-family:var(--mono);font-size:10px;color:var(--sienna)">Rev. ann. = Rev. 30d × 12</div>
     <div style="display:flex;gap:10px;font-family:var(--mono);font-size:9px;color:var(--sand)">
       <span>P/E :</span>
@@ -204,7 +204,8 @@
   <table>
     <thead>
       <tr>
-        <th>Protocol</th>
+        <th style="width:28px"></th>
+        <th style="text-align:left">Protocol</th>
         <th class="sortable" data-key="price">Prix <span class="sort-icon"></span></th>
         <th class="sortable" data-key="change24h">24h <span class="sort-icon"></span></th>
         <th class="sortable sort-active sort-desc" data-key="mcap">Mcap <span class="sort-icon">↓</span></th>
@@ -226,7 +227,7 @@
 <div class="tab-pane active" id="tab-compare">
 
   <!-- Sticky coin selector -->
-  <div style="position:sticky;top:110px;z-index:98;background:var(--cream);padding:14px 0 12px;border-bottom:var(--border);margin-bottom:20px;box-shadow:0 8px 0 8px var(--cream)">
+  <div style="position:sticky;top:124px;z-index:98;background:var(--cream);padding:14px 0 12px;border-bottom:var(--border);margin-bottom:20px;box-shadow:0 8px 0 8px var(--cream)">
     <div class="coin-selector" id="coin-selector"></div>
   </div>
 
