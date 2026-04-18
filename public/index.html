@@ -521,9 +521,9 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
     : active.filter(d => d.rev?.history?.length >= 3);
 
   const useActive = filtered.length ? filtered : [];
-  const isRevFlag = metric === 'rev30d';
-  const tickCb    = isRevFlag ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
-  const ttCb      = isRevFlag ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
+  const isRevFlag   = metric === 'rev30d' || metric === 'rev_daily';
+  const tickCb      = isRevFlag ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
+  const ttCb        = isRevFlag ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
 
   const allLabels = useActive.reduce((best, d) => {
     const { labels } = getMetricSeries(d, metric, globalDays);
