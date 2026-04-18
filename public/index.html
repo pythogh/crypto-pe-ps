@@ -1095,7 +1095,7 @@ function redrawOpenDetailCharts() {
       const d = allData.find(x => x._idx === idx);
       if (d) {
         const zoneChk = document.getElementById('zone-toggle-' + idx);
-        buildCoinDetailChart(d, canvas.id, zoneChk?.checked || false, globalDays);
+        buildCoinDetailChart(d, canvas.id, zoneChk?.checked || true, globalDays);
       }
     }
   });
