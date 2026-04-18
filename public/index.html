@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -30,17 +31,12 @@
       background: var(--cream); color: var(--ink); font-family: var(--serif);
       padding: 0 28px 60px; max-width: 1060px; margin: 0 auto;
     }
-
-    #sticky-top {
-      position: sticky; top: 0; z-index: 100;
-      background: var(--cream);
-      padding: 0;
-      box-shadow: 0 12px 0 12px var(--cream);
-    }
     header {
       display: flex; justify-content: space-between; align-items: center;
       padding: 18px 0 14px;
       background: var(--cream);
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 12px 0 0 var(--cream);
     }
     .logo { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
     .logo em { color: var(--orange); font-style: normal; }
@@ -50,19 +46,20 @@
     .tabs {
       display: flex; gap: 8px; margin-bottom: 0; padding: 12px 0 14px;
       background: var(--cream);
+      position: sticky; top: 66px; z-index: 99;
+      box-shadow: 0 12px 0 0 var(--cream);
     }
     .tab-btn {
       font-family: var(--mono); font-size: 11px; text-transform: uppercase;
-      letter-spacing: .06em; padding: 7px 0 8px;
-      width: 120px; text-align: center;
-      background: none; border: 1px solid transparent; border-radius: 6px;
-      cursor: pointer; color: var(--sand); transition: all .15s;
+      letter-spacing: .06em; padding: 10px 28px 12px;
+      background: none; border: none; cursor: pointer;
+      color: var(--sand); transition: color .15s;
+      position: relative; bottom: -1px;
     }
-    .tab-btn:hover { color: var(--sienna); border-color: var(--parchment); }
+    .tab-btn:hover { color: var(--ink); }
     .tab-btn.active {
       color: var(--ink);
-      border: 1px solid var(--parchment);
-      background: var(--white);
+      border-bottom: 2px solid var(--ink);
     }
 
     .tab-pane { display: none; }
@@ -99,7 +96,7 @@
       font-family: var(--mono); font-size: 10px; text-transform: uppercase;
       letter-spacing: .07em; color: var(--sienna); padding: 18px 10px 12px;
       text-align: right; border-bottom: var(--border); font-weight: 400; white-space: nowrap;
-      position: sticky; top: var(--sticky-thead, 164px); background: var(--cream); z-index: 97; border-bottom: 2px solid var(--parchment) !important; box-shadow: 0 8px 0 8px var(--cream);
+      position: sticky; top: 162px; background: var(--cream); z-index: 97; border-bottom: 2px solid var(--parchment) !important; box-shadow: 0 8px 0 8px var(--cream);
     }
     thead th:first-child { text-align: left; }
     thead th.sortable { cursor: pointer; user-select: none; transition: color .15s; }
@@ -165,7 +162,6 @@
 </head>
 <body>
 
-<div id="sticky-top">
 <header>
   <div>
     <div class="logo">token<em>.</em>pe</div>
@@ -185,7 +181,6 @@
   <button class="tab-btn active" data-tab="compare">⇄ Compare</button>
   <button class="tab-btn" data-tab="tableau">≡ Table</button>
 </div>
-</div>
 
 <div id="loading">
   <div style="font-family:var(--mono);font-size:12px;color:var(--sienna);margin-bottom:12px" id="loading-text">Fetching data…</div>
@@ -196,7 +191,7 @@
 
 <!-- ── TAB : Tableau ── -->
 <div class="tab-pane" id="tab-tableau">
-  <div style="position:sticky;top:var(--sticky-sub,120px);z-index:98;background:var(--cream);padding:16px 0 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;border-bottom:var(--border);box-shadow:0 12px 0 12px var(--cream)">
+  <div style="position:sticky;top:116px;z-index:98;background:var(--cream);padding:16px 0 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;border-bottom:var(--border);box-shadow:0 12px 0 12px var(--cream)">
     <div style="font-family:var(--mono);font-size:10px;color:var(--sienna)">Rev. ann. = Rev. 30d × 12</div>
     <div style="display:flex;gap:10px;font-family:var(--mono);font-size:9px;color:var(--sand)">
       <span>P/E :</span>
@@ -232,7 +227,7 @@
 <div class="tab-pane active" id="tab-compare">
 
   <!-- Sticky coin selector -->
-  <div style="position:sticky;top:var(--sticky-sub,120px);z-index:98;background:var(--cream);padding:16px 0 14px;border-bottom:var(--border);margin-bottom:20px;box-shadow:0 12px 0 12px var(--cream)">
+  <div style="position:sticky;top:116px;z-index:98;background:var(--cream);padding:16px 0 14px;border-bottom:var(--border);margin-bottom:20px;box-shadow:0 12px 0 12px var(--cream)">
     <div class="coin-selector" id="coin-selector"></div>
   </div>
 
@@ -595,7 +590,7 @@ function renderTable() {
   const wasSelected = d._idx === selectedCoinIdx;
   const _val = computeValuation(d);
   const _valCell = _val
-    ? '<td class="num"><span title="P/E actuel : ' + _val.current.toFixed(1) + 'x — vert < ' + _val.p20.toFixed(1) + 'x · rouge > ' + _val.p80.toFixed(1) + 'x (percentiles 20/80 sur 1 an)" style="font-weight:500;color:' + _val.color + ';background:' + _val.bg + ';padding:2px 8px;border-radius:4px;cursor:help;font-size:11px">' + _val.label + '</span></td>'
+    ? '<td class="num"><span title="P/E actuel : ' + _val.current.toFixed(1) + 'x — vert < ' + _val.p20.toFixed(1) + 'x · rouge > ' + _val.p80.toFixed(1) + 'x (percentiles 20/80 sur 1 an)" style="font-weight:500;color:' + _val.color + ';background:' + _val.bg + ';padding:2px 8px;border-radius:4px;cursor:help;font-size:11px">' + _val.label + '</span></td>'
     : '<td class="na">—</td>';
     tr.innerHTML = `
       <td style="width:28px;text-align:center;color:var(--sienna);font-family:var(--mono);font-size:14px;padding-left:8px">
@@ -1107,12 +1102,6 @@ function redrawOpenDetailCharts() {
   });
 }
 
-function updateStickyTops() {
-  const h = document.getElementById('sticky-top')?.offsetHeight || 120;
-  document.documentElement.style.setProperty('--sticky-sub', h + 'px');
-  document.documentElement.style.setProperty('--sticky-thead', (h + 46) + 'px');
-}
-
 async function init() {
   const loadEl = document.getElementById('loading');
   try {
@@ -1147,10 +1136,7 @@ async function init() {
     initSort();
     renderTable();
     buildCoinSelector();
-    buildCompareChart();
-    updateStickyTops();
-    // Re-measure after fonts load (affects height)
-    document.fonts.ready.then(updateStickyTops); // compare is default tab
+    buildCompareChart(); // compare is default tab
 
     const updatedEl = document.getElementById('updated');
     const _now = new Date();
