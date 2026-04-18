@@ -665,7 +665,7 @@ function renderTable() {
                 </span>
               </div>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:var(--mono);font-size:9px;color:var(--sienna);user-select:none">
-                <input type="checkbox" id="${zoneId}" style="accent-color:var(--umber);cursor:pointer" />
+                <input type="checkbox" id="${zoneId}" style="accent-color:var(--umber);cursor:pointer" checked/>
                 Buy zones
               </label>
             </div>
@@ -688,11 +688,11 @@ function renderTable() {
       const canvasEl = detailRow.querySelector('canvas');
       if (canvasEl) {
         const obs = new ResizeObserver(() => {
-          if (canvasEl.offsetWidth > 0) { obs.disconnect(); buildCoinDetailChart(d, canvasId, false, globalDays); }
+          if (canvasEl.offsetWidth > 0) { obs.disconnect(); buildCoinDetailChart(d, canvasId, true, globalDays); }
         });
         obs.observe(canvasEl);
       } else {
-        setTimeout(() => buildCoinDetailChart(d, canvasId, false, globalDays), 150);
+        setTimeout(() => buildCoinDetailChart(d, canvasId, true, globalDays), 150);
       }
     });
     tbody.appendChild(tr);
