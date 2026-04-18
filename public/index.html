@@ -155,7 +155,16 @@
 
 <header>
   <div class="logo">token<em>.</em>pe</div>
-  <div id="updated"><span style="color:var(--sienna)">Last update</span> <span id="update-time">—</span></div>
+  <div style="display:flex;align-items:center;gap:20px">
+    <div class="time-filters" id="header-days-filter">
+      <button class="tf-btn" data-days="7">7d</button>
+      <button class="tf-btn" data-days="30">1m</button>
+      <button class="tf-btn" data-days="90">3m</button>
+      <button class="tf-btn" data-days="180">6m</button>
+      <button class="tf-btn active" data-days="365">1y</button>
+    </div>
+    <div id="updated"><span style="color:var(--sienna)">Last update</span> <span id="update-time">—</span></div>
+  </div>
 </header>
 
 <!-- Tabs -->
@@ -337,12 +346,12 @@ let compareChartPE    = null;
 let compareChartDaily = null;
 let selectedCoinIdx   = null;
 
-function buildCoinDetailChart(d, canvasId, showZones) {
+function buildCoinDetailChart(d, canvasId, showZones, days) {
   if (!d || !d.prices?.length) return;
 
   // Update header
 
-  const days = 365;
+  days = days || globalDays;
   const cutoff = Date.now() - days * 86400000;
   const src    = d.prices.filter(([ts]) => ts >= cutoff);
   const use    = src.length >= 2 ? src : d.prices;
@@ -657,7 +666,7 @@ function renderTable() {
       const zoneChk = detailRow.querySelector('#' + zoneId);
       if (zoneChk) {
         zoneChk.addEventListener('change', () => {
-          buildCoinDetailChart(d, canvasId, zoneChk.checked);
+          buildCoinDetailChart(d, canvasId, zoneChk.checked, globalDays);
         });
       }
       // Small delay ensures the row is visible before Chart.js measures canvas
@@ -665,11 +674,11 @@ function renderTable() {
       const canvasEl = detailRow.querySelector('canvas');
       if (canvasEl) {
         const obs = new ResizeObserver(() => {
-          if (canvasEl.offsetWidth > 0) { obs.disconnect(); buildCoinDetailChart(d, canvasId, false); }
+          if (canvasEl.offsetWidth > 0) { obs.disconnect(); buildCoinDetailChart(d, canvasId, false, globalDays); }
         });
         obs.observe(canvasEl);
       } else {
-        setTimeout(() => buildCoinDetailChart(d, canvasId, false), 150);
+        setTimeout(() => buildCoinDetailChart(d, canvasId, false, globalDays), 150);
       }
     });
     tbody.appendChild(tr);
@@ -1016,9 +1025,22 @@ function buildCompareChart() {
 document.getElementById('global-filters').querySelectorAll('.tf-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     globalDays = parseInt(btn.dataset.days);
-    document.querySelectorAll('#global-filters .tf-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('#global-filters .tf-btn, #header-days-filter .tf-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.days) === globalDays);
+    });
     buildCompareChart();
+    redrawOpenDetailCharts();
+  });
+});
+
+document.getElementById('header-days-filter').querySelectorAll('.tf-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    globalDays = parseInt(btn.dataset.days);
+    document.querySelectorAll('#global-filters .tf-btn, #header-days-filter .tf-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.days) === globalDays);
+    });
+    buildCompareChart();
+    redrawOpenDetailCharts();
   });
 });
 
@@ -1043,6 +1065,19 @@ document.addEventListener('click', e => {
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+function redrawOpenDetailCharts() {
+  document.querySelectorAll('[id^="detail-canvas-"]').forEach(canvas => {
+    if (canvas.offsetWidth > 0) {
+      const idx = parseInt(canvas.id.replace('detail-canvas-', ''));
+      const d = allData.find(x => x._idx === idx);
+      if (d) {
+        const zoneChk = document.getElementById('zone-toggle-' + idx);
+        buildCoinDetailChart(d, canvas.id, zoneChk?.checked || false, globalDays);
+      }
+    }
+  });
+}
+
 async function init() {
   const loadEl = document.getElementById('loading');
   try {
