@@ -3,7 +3,7 @@ const path    = require('path');
 const https   = require('https');
 const app     = express();
 
-const CG_KEY  = 'CG-zQg6pyzA4RPm5Tti2p7RTsn2';
+const CG_KEY  = process.env.CG_KEY || 'CG-zQg6pyzA4RPm5Tti2p7RTsn2';
 const CG_BASE = 'https://api.coingecko.com/api/v3';
 const LL_BASE = 'https://api.llama.fi';
 
@@ -11,9 +11,31 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // ── Cache ─────────────────────────────────────────────────────────────────────
-let cache       = null;
-let cacheTime   = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const fs        = require('fs');
+const CACHE_FILE = '/tmp/token_pe_cache.json';
+const CACHE_TTL  = 5 * 60 * 1000; // 5 minutes
+
+let cache     = null;
+let cacheTime = 0;
+
+// Load from disk on startup
+try {
+  const raw  = fs.readFileSync(CACHE_FILE, 'utf8');
+  const { data, time } = JSON.parse(raw);
+  cache     = data;
+  cacheTime = time;
+  console.log(`[cache] loaded from disk (${Math.round((Date.now()-time)/1000)}s old)`);
+} catch(e) {
+  console.log('[cache] no disk cache found, will fetch fresh');
+}
+
+function saveCacheToDisk(data) {
+  try {
+    fs.writeFileSync(CACHE_FILE, JSON.stringify({ data, time: Date.now() }));
+  } catch(e) {
+    console.warn('[cache] could not write to disk:', e.message);
+  }
+}
 
 // ── HTTP helper ───────────────────────────────────────────────────────────────
 function fetchJSON(url, headers = {}, retries = 2) {
@@ -152,6 +174,7 @@ app.post('/api/batch', async (req, res) => {
     const results = await fetchAllCoins(coins);
     cache     = results;
     cacheTime = Date.now();
+    saveCacheToDisk(results);
     res.json(results);
   } catch(e) {
     console.error('[batch error]', e.message);
@@ -192,6 +215,7 @@ setTimeout(async () => {
   try {
     cache     = await fetchAllCoins(DEFAULT_COINS);
     cacheTime = Date.now();
+    saveCacheToDisk(cache);
     console.log('[pre-warm] done ✅');
   } catch(e) {
     console.error('[pre-warm error]', e.message);
