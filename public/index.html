@@ -545,21 +545,23 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
   const legend = document.getElementById(legendId);
   legend.innerHTML = '';
 
+  const isDaily   = metric === 'rev_daily';
+  const isRevFlag = metric === 'rev30d' || metric === 'rev_daily';
+  const tickCb    = isRevFlag ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
+  const ttCb      = isRevFlag ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
+
   // Filter coins with sufficient data
   const filtered = metric === 'pe'
     ? active.filter(d => d.rev?.history?.length >= 5 && d.mcap)
     : active.filter(d => d.rev?.history?.length >= 3);
-
   const useActive = filtered.length ? filtered : [];
-  const isRevFlag   = metric === 'rev30d' || metric === 'rev_daily';
-  const tickCb      = isRevFlag ? v => fmt(v)||'' : v => v.toFixed(0)+'x';
-  const ttCb        = isRevFlag ? v => fmt(v)||'—' : v => v.toFixed(1)+'x';
 
   const allLabels = useActive.reduce((best, d) => {
     const { labels } = getMetricSeries(d, metric, days);
     return labels.length > best.length ? labels : best;
   }, []);
 
+  // Line datasets
   const datasets = useActive.map(d => {
     const color = getCoinColor(d, d._idx);
     const { data } = getMetricSeries(d, metric, days);
@@ -567,6 +569,18 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
       label: d.symbol, data, borderColor: color,
       backgroundColor: 'transparent',
       borderWidth: 1.5, pointRadius: 0, tension: 0.35, spanGaps: true,
+    };
+  });
+
+  // Bar datasets (daily rev — filled solid)
+  const barDatasets = useActive.map(d => {
+    const barColor = getCoinColor(d, d._idx);
+    const { data } = getMetricSeries(d, metric, days);
+    return {
+      label: d.symbol, data,
+      backgroundColor: barColor,
+      borderColor: 'transparent',
+      borderWidth: 0, borderRadius: 2, borderSkipped: false,
     };
   });
 
@@ -578,25 +592,32 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
     legend.appendChild(item);
   });
 
-  const barDatasets = isDaily ? useActive.map(d => {
-    const barColor = getCoinColor(d, d._idx);
-    const { data } = getMetricSeries(d, metric, days);
-    return {
-      label: d.symbol, data,
-      backgroundColor: barColor,
-      borderColor: 'transparent',
-      borderWidth: 0,
-      borderRadius: 2,
-      borderSkipped: false,
-    };
-  }) : datasets;
+  // Update existing chart in-place
+  if (existingChart) {
+    existingChart.data.labels   = allLabels;
+    existingChart.data.datasets = isDaily ? barDatasets : datasets;
+    existingChart.options.scales.y.ticks.callback = tickCb;
+    existingChart.update('none');
+    return existingChart;
+  }
+
+  // First creation — fresh canvas
+  const oldCanvas = document.getElementById(canvasId);
+  if (!oldCanvas) return null;
+  const wrapper = oldCanvas.parentElement;
+  oldCanvas.remove();
+  const canvas = document.createElement('canvas');
+  canvas.id = canvasId;
+  canvas.setAttribute('role', 'img');
+  wrapper.appendChild(canvas);
+  if (!useActive.length) return null;
 
   const endLabelsPlugin = {
     id: 'endLabels-' + canvasId,
     afterDraw(chart) {
       if (isDaily) return;
-      const ctx   = chart.ctx;
-      const area  = chart.chartArea;
+      const ctx  = chart.ctx;
+      const area = chart.chartArea;
       chart.data.datasets.forEach((ds, i) => {
         const meta = chart.getDatasetMeta(i);
         if (meta.hidden) return;
@@ -610,7 +631,6 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
         ctx.save();
         ctx.font      = "bold 10px 'DM Mono', monospace";
         ctx.fillStyle = ds.borderColor;
-        // Draw label INSIDE canvas: if too close to right edge, draw to the left
         const w = ctx.measureText(label).width;
         const x = last.x + w + 8 > area.right ? last.x - w - 6 : last.x + 5;
         const y = Math.max(area.top + 10, Math.min(area.bottom - 4, last.y + 4));
@@ -640,14 +660,12 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
       },
       scales: {
         x: {
-          stacked: false,
-          grid: { color: 'rgba(180,160,130,0.1)' },
+          stacked: false, grid: { color: 'rgba(180,160,130,0.1)' },
           border: { display: false },
           ticks: { font:{family:"'DM Mono',monospace",size:9}, color:'#9A7B5A', maxTicksLimit: isDaily ? 10 : 8 },
         },
         y: {
-          position: 'left',
-          grid: { color: 'rgba(180,160,130,0.1)' },
+          position: 'left', grid: { color: 'rgba(180,160,130,0.1)' },
           border: { display: false },
           ticks: { font:{family:"'DM Mono',monospace",size:9}, color:'#9A7B5A', callback: tickCb },
         },
@@ -656,18 +674,17 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
     plugins: [endLabelsPlugin],
   });
 
-  // Drill-down on bar click: show tooltip with coin details
+  // Drill-down click on bar
   if (isDaily) {
     canvas.addEventListener('click', (e) => {
       const pts = newChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
       if (!pts.length) return;
-      const dsIdx = pts[0].datasetIndex;
+      const dsIdx  = pts[0].datasetIndex;
       const barIdx = pts[0].index;
-      const d = useActive[dsIdx];
+      const d      = useActive[dsIdx];
       if (!d) return;
-      const date  = allLabels[barIdx];
+      const date   = allLabels[barIdx];
       const barVal = newChart.data.datasets[dsIdx].data[barIdx];
-      // Show a small tooltip popup
       let popup = document.getElementById('drill-popup');
       if (!popup) {
         popup = document.createElement('div');
@@ -676,9 +693,8 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
         document.body.appendChild(popup);
       }
       popup.innerHTML = `<b style="color:${getCoinColor(d,d._idx)}">${d.name}</b><br>${date}<br>Rev: ${fmt(barVal)||'—'}`;
-      const rect = canvas.getBoundingClientRect();
-      popup.style.left = (e.clientX + 12) + 'px';
-      popup.style.top  = (e.clientY - 10) + 'px';
+      popup.style.left    = (e.clientX + 12) + 'px';
+      popup.style.top     = (e.clientY - 10) + 'px';
       popup.style.opacity = '1';
       clearTimeout(popup._timer);
       popup._timer = setTimeout(() => { popup.style.opacity = '0'; }, 2500);
