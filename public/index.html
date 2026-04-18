@@ -618,10 +618,11 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
       if (isDaily) return;
       const ctx  = chart.ctx;
       const area = chart.chartArea;
-      // Collect label positions
+      const LINE_H = 15; // min vertical gap between labels
+      // Collect
       const items = [];
-      chart.data.datasets.forEach((ds, i) => {
-        const meta = chart.getDatasetMeta(i);
+      chart.data.datasets.forEach((ds) => {
+        const meta   = chart.getDatasetMeta(chart.data.datasets.indexOf(ds));
         if (meta.hidden) return;
         const visPts = meta.data.filter(p => p && isFinite(p.x) && isFinite(p.y));
         if (!visPts.length) return;
@@ -632,22 +633,31 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
         const label = isRevFlag ? (fmt(val)||'') : val.toFixed(1) + 'x';
         items.push({ label, color: ds.borderColor, x: last.x, y: last.y });
       });
-      // Push apart overlapping labels (min 13px gap)
+      if (!items.length) return;
+      // Sort by y descending, then spread apart
       items.sort((a, b) => a.y - b.y);
+      // Forward pass: push down
       for (let j = 1; j < items.length; j++) {
-        if (items[j].y - items[j-1].y < 13) items[j].y = items[j-1].y + 13;
+        if (items[j].y < items[j-1].y + LINE_H)
+          items[j].y = items[j-1].y + LINE_H;
+      }
+      // Backward pass: pull up if pushed below bottom
+      for (let j = items.length - 2; j >= 0; j--) {
+        if (items[j].y > items[j+1].y - LINE_H)
+          items[j].y = items[j+1].y - LINE_H;
       }
       ctx.font = "bold 10px 'DM Mono', monospace";
       items.forEach(({ label, color, x, y }) => {
         const w      = ctx.measureText(label).width;
-        const goLeft = x + w + 8 > area.right;
-        const px     = goLeft ? x - w - 6 : x + 5;
+        const goLeft = x + w + 10 > area.right;
+        const px     = goLeft ? x - w - 5 : x + 5;
         const py     = Math.max(area.top + 12, Math.min(area.bottom - 3, y));
         ctx.save();
-        ctx.fillStyle = 'rgba(242,237,228,0.85)';
-        ctx.fillRect(px - 2, py - 11, w + 4, 14);
+        // Background pill
+        ctx.fillStyle = 'rgba(242,237,228,0.9)';
+        ctx.fillRect(px - 3, py - 11, w + 6, 14);
         ctx.fillStyle = color;
-        ctx.textAlign = goLeft ? 'right' : 'left';
+        ctx.textAlign = 'left';
         ctx.fillText(label, px, py);
         ctx.restore();
       });
