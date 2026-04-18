@@ -623,6 +623,8 @@ function renderTable() {
       ${_valCell}
     `;
     tr.addEventListener('click', () => {
+      const isOpen = d._idx === selectedCoinIdx; // capture before reset
+
       // Update all toggle icons
       document.querySelectorAll('tbody tr.coin-row .row-toggle').forEach(s => s.textContent = '+');
       // Close any open detail row
@@ -631,7 +633,7 @@ function renderTable() {
 
       selectedCoinIdx = null;
 
-      if (wasSelected) return; // toggle off
+      if (isOpen) return; // toggle off — was already open
 
       // Open new detail row below
       selectedCoinIdx = d._idx;
