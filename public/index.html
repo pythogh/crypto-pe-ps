@@ -809,28 +809,3 @@ init();
 </script>
 </body>
 </html>
-
-  // Update existing chart in-place (avoids flicker)
-  if (existingChart) {
-    existingChart.data.labels   = allLabels;
-    existingChart.data.datasets = isDaily ? barDatasets : datasets;
-    existingChart.options.scales.y.ticks.callback = tickCb;
-    existingChart.update('none');
-    return existingChart;
-  }
-
-  // First creation — fresh canvas
-  const oldCanvas = document.getElementById(canvasId);
-  if (!oldCanvas) return null;
-  const wrapper = oldCanvas.parentElement;
-  oldCanvas.remove();
-  const canvas = document.createElement('canvas');
-  canvas.id = canvasId;
-  canvas.setAttribute('role', 'img');
-  wrapper.appendChild(canvas);
-
-  if (!useActive.length) return null;
-
-  const isDaily = metric === 'rev_daily';
-
-  // For bar chart, each dataset needs backgroundColor
