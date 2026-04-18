@@ -234,6 +234,11 @@
       <div class="compare-chart-box"><canvas id="compare-chart-rev" role="img" aria-label="Revenue 30j comparatif"></canvas></div>
       <div class="compare-legend" id="compare-legend-rev"></div>
     </div>
+    <div class="compare-chart-wrap">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Daily revenue</div>
+      <div class="compare-chart-box"><canvas id="compare-chart-daily" role="img" aria-label="Daily revenue"></canvas></div>
+      <div class="compare-legend" id="compare-legend-daily"></div>
+    </div>
   </div>
 
 </div>
@@ -305,8 +310,9 @@ let allData    = [];
 let globalDays = 365;
 
 let selectedCoins   = new Set();
-let compareChartRev = null;
-let compareChartPE  = null;
+let compareChartRev   = null;
+let compareChartPE    = null;
+let compareChartDaily = null;
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 function fmt(n) {
@@ -493,6 +499,15 @@ function getMetricSeries(d, metric, days) {
       data,
     };
   }
+  if (metric === 'rev_daily') {
+    if (!d.rev?.history?.length) return { labels: [], data: [] };
+    const rh  = d.rev.history.filter(([ts]) => ts >= cutoff);
+    const use = rh.length >= 2 ? rh : d.rev.history.slice(-Math.min(days, d.rev.history.length));
+    return {
+      labels: use.map(([ts]) => new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' })),
+      data:   use.map(([, v]) => v || 0),
+    };
+  }
   return { labels: [], data: [] };
 }
 
@@ -554,9 +569,48 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
 
   if (!useActive.length) return null;
 
+  const isDaily = metric === 'rev_daily';
+
+  // For bar chart, each dataset needs backgroundColor
+  const barDatasets = isDaily ? useActive.map(d => {
+    const barColor = getCoinColor(d, d._idx);
+    const { data } = getMetricSeries(d, metric, globalDays);
+    return {
+      label: d.symbol, data,
+      backgroundColor: barColor + 'AA',
+      borderColor: barColor,
+      borderWidth: 1,
+      borderRadius: 2,
+    };
+  }) : datasets;
+
+  const endLabelsPlugin = {
+    id: 'endLabels',
+    afterDraw(chart) {
+      if (isDaily) return; // no end labels on bar chart
+      const ctx = chart.ctx;
+      chart.data.datasets.forEach((ds, i) => {
+        const meta = chart.getDatasetMeta(i);
+        if (meta.hidden) return;
+        const pts = meta.data.filter(p => !isNaN(p.y) && isFinite(p.y));
+        if (!pts.length) return;
+        const last = pts[pts.length - 1];
+        const val  = ds.data.filter(v => v !== null && isFinite(v)).slice(-1)[0];
+        if (val == null) return;
+        const label = isRevFlag ? (fmt(val)||'') : val.toFixed(1)+'x';
+        ctx.save();
+        ctx.font = "bold 10px 'DM Mono', monospace";
+        ctx.fillStyle = ds.borderColor;
+        ctx.textAlign = 'left';
+        ctx.fillText(label, last.x + 4, last.y + 3);
+        ctx.restore();
+      });
+    }
+  };
+
   return new Chart(canvas, {
-    type: 'line',
-    data: { labels: allLabels, datasets },
+    type: isDaily ? 'bar' : 'line',
+    data: { labels: allLabels, datasets: isDaily ? barDatasets : datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
@@ -570,35 +624,14 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
           filter: item => item.parsed.y !== null,
           callbacks: { label: c => ` ${c.dataset.label}: ${ttCb(c.parsed.y)}` },
         },
-        // Draw current value label at end of each line
-        afterDraw: {
-          id: 'endLabels',
-          afterDraw(chart) {
-            const ctx = chart.ctx;
-            chart.data.datasets.forEach((ds, i) => {
-              const meta = chart.getDatasetMeta(i);
-              if (meta.hidden) return;
-              const pts = meta.data.filter(p => !isNaN(p.y) && isFinite(p.y));
-              if (!pts.length) return;
-              const last = pts[pts.length - 1];
-              const val  = ds.data.filter(v => v !== null && isFinite(v)).slice(-1)[0];
-              if (val == null) return;
-              const label = isRevFlag ? (fmt(val)||'') : val.toFixed(1)+'x';
-              ctx.save();
-              ctx.font = "bold 10px 'DM Mono', monospace";
-              ctx.fillStyle = ds.borderColor;
-              ctx.textAlign = 'left';
-              ctx.fillText(label, last.x + 4, last.y + 3);
-              ctx.restore();
-            });
-          }
-        },
+        endLabelsPlugin,
       },
       scales: {
         x: {
+          stacked: false,
           grid: { color: 'rgba(180,160,130,0.1)' },
           border: { display: false },
-          ticks: { font:{family:"'DM Mono',monospace",size:9}, color:'#9A7B5A', maxTicksLimit:8 },
+          ticks: { font:{family:"'DM Mono',monospace",size:9}, color:'#9A7B5A', maxTicksLimit: isDaily ? 10 : 8 },
         },
         y: {
           position: 'left',
@@ -608,6 +641,7 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
         },
       },
     },
+    plugins: [endLabelsPlugin],
   });
 }
 
@@ -616,9 +650,9 @@ function buildCompareChart() {
   const active = allData.filter(d => selectedCoins.has(d._idx));
   if (!active.length) return;
 
-  // Pass existing chart instances for update-in-place (no flicker)
-  compareChartPE  = makeCompareChart('compare-chart-pe',  'compare-legend-pe',  'pe',     active, compareChartPE);
-  compareChartRev = makeCompareChart('compare-chart-rev', 'compare-legend-rev', 'rev30d', active, compareChartRev);
+  compareChartPE    = makeCompareChart('compare-chart-pe',    'compare-legend-pe',    'pe',        active, compareChartPE);
+  compareChartRev   = makeCompareChart('compare-chart-rev',   'compare-legend-rev',   'rev30d',    active, compareChartRev);
+  compareChartDaily = makeCompareChart('compare-chart-daily', 'compare-legend-daily', 'rev_daily', active, compareChartDaily);
 }
 
 // metric buttons removed — always show both charts
