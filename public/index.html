@@ -85,7 +85,7 @@
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     thead th {
       font-family: var(--mono); font-size: 10px; text-transform: uppercase;
-      letter-spacing: .07em; color: var(--sienna); padding: 0 10px 12px;
+      letter-spacing: .07em; color: var(--sienna); padding: 18px 10px 12px;
       text-align: right; border-bottom: var(--border); font-weight: 400; white-space: nowrap;
     }
     thead th:first-child { text-align: left; }
@@ -528,6 +528,14 @@ function renderTable() {
       };background:${
         fdve < 10 ? 'rgba(22,163,74,0.1)' : fdve < 25 ? 'rgba(202,138,4,0.1)' : fdve < 50 ? 'rgba(234,88,12,0.1)' : 'rgba(220,38,38,0.1)'
       };padding:2px 6px;border-radius:4px">${fdve.toFixed(1)}x</span></td>` : `<td class="na">—</td>`}
+      ${(() => {
+        const v = computeValuation(d);
+        if (!v) return `<td class="na">—</td>`;
+        return `<td class="num"><span
+          title="P/E: ${v.current.toFixed(1)}x — P20: ${v.p20.toFixed(1)}x · P80: ${v.p80.toFixed(1)}x (1y)"
+          style="font-weight:500;color:${v.color};background:${v.bg};padding:2px 8px;border-radius:4px;cursor:default;font-size:11px"
+        >${v.label}</span></td>`;
+      })()}
     `;
     tr.addEventListener('click', () => {
       const wasSelected = d._idx === selectedCoinIdx;
