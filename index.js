@@ -3,7 +3,7 @@ const path    = require('path');
 const https   = require('https');
 const app     = express();
 
-const CG_KEY  = process.env.CG_KEY || 'CG-zQg6pyzA4RPm5Tti2p7RTsn2';
+const CG_KEY  = process.env.CG_KEY;
 const CG_BASE = 'https://api.coingecko.com/api/v3';
 const LL_BASE = 'https://api.llama.fi';
 
