@@ -210,24 +210,27 @@
 
       <div class="coin-selector" id="coin-selector"></div>
     </div>
-    <div class="time-filters" id="global-filters">
-      <button class="tf-btn" data-days="7">7j</button>
-      <button class="tf-btn" data-days="30">1m</button>
-      <button class="tf-btn" data-days="90">3m</button>
-      <button class="tf-btn" data-days="180">6m</button>
-      <button class="tf-btn active" data-days="365">1a</button>
-    </div>
+
   </div>
 
   <!-- Two charts -->
   <div style="display:flex;flex-direction:column;gap:16px">
     <div class="compare-chart-wrap">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">P/E ratio</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em">P/E ratio</div>
+        <div class="time-filters" id="global-filters">
+          <button class="tf-btn" data-days="7">7d</button>
+          <button class="tf-btn" data-days="30">1m</button>
+          <button class="tf-btn" data-days="90">3m</button>
+          <button class="tf-btn" data-days="180">6m</button>
+          <button class="tf-btn active" data-days="365">1y</button>
+        </div>
+      </div>
       <div class="compare-chart-box"><canvas id="compare-chart-pe" role="img" aria-label="P/E comparatif"></canvas></div>
       <div class="compare-legend" id="compare-legend-pe"></div>
     </div>
     <div class="compare-chart-wrap">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Rolling 30d rev.</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--sienna);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Rolling 30d revenue</div>
       <div class="compare-chart-box"><canvas id="compare-chart-rev" role="img" aria-label="Revenue 30j comparatif"></canvas></div>
       <div class="compare-legend" id="compare-legend-rev"></div>
     </div>
@@ -267,17 +270,17 @@ const COINS = [
 const BRAND_COLORS = {
   'hyperliquid':             '#00D4C8',
   'pump-fun':                '#00C853',
-  'aave':                    '#B6509E',
+  'aave':                    '#9896FF',
   'lido-dao':                '#F0A500',
   'ether-fi':                '#6C5CE7',
   'syrup':                   '#F97316',
   'railgun':                 '#7C3AED',
   'sky':                     '#F4C430',
-  'derive':                  '#FF6B35',
+  'derive':                  '#D4420A',
   'kinetiq':                 '#00B4D8',
   'pendle':                  '#3D9BE9',
   'jupiter-exchange-solana': '#16A34A',
-  'lighter':                 '#E040FB',
+  'lighter':                 '#1a1a1a',
   'aerodrome-finance':       '#FF0420',
   'meteora':                 '#AB47BC',
   'gmx':                     '#4FC3F7',
@@ -566,6 +569,29 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart) {
           padding: 10,
           filter: item => item.parsed.y !== null,
           callbacks: { label: c => ` ${c.dataset.label}: ${ttCb(c.parsed.y)}` },
+        },
+        // Draw current value label at end of each line
+        afterDraw: {
+          id: 'endLabels',
+          afterDraw(chart) {
+            const ctx = chart.ctx;
+            chart.data.datasets.forEach((ds, i) => {
+              const meta = chart.getDatasetMeta(i);
+              if (meta.hidden) return;
+              const pts = meta.data.filter(p => !isNaN(p.y) && isFinite(p.y));
+              if (!pts.length) return;
+              const last = pts[pts.length - 1];
+              const val  = ds.data.filter(v => v !== null && isFinite(v)).slice(-1)[0];
+              if (val == null) return;
+              const label = isRevFlag ? (fmt(val)||'') : val.toFixed(1)+'x';
+              ctx.save();
+              ctx.font = "bold 10px 'DM Mono', monospace";
+              ctx.fillStyle = ds.borderColor;
+              ctx.textAlign = 'left';
+              ctx.fillText(label, last.x + 4, last.y + 3);
+              ctx.restore();
+            });
+          }
         },
       },
       scales: {
