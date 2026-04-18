@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>crypto.pe</title>
+  <title>multiples.xyz</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
@@ -705,24 +705,10 @@ function makeCompareChart(canvasId, legendId, metric, active, existingChart, day
     : active.filter(d => d.rev?.history?.length >= 3);
   const useActive = filtered.length ? filtered : [];
 
-  // Build a common timestamp-based X axis spanning the full range
-  // Each coin gets its data mapped onto this shared axis (null for missing dates)
+  // Build common timestamp-based X axis
   const cutoff = Date.now() - days * 86400000;
 
-  // Collect all unique timestamps across all coins for this metric
-  const tsSet = new Set();
-  useActive.forEach(d => {
-    const { labels, data } = getMetricSeries(d, metric, days);
-    // getMetricSeries already filters by cutoff, so just use its labels
-    labels.forEach(l => tsSet.add(l));
-  });
-  const allLabels = Array.from(tsSet).sort((a, b) => {
-    // Sort by actual date — labels are like "18 Apr" so we need to compare
-    // Use index from the longest series instead
-    return 0;
-  });
-
-  // Actually: collect raw timestamps, build sorted unique date list, format them
+  // Collect raw timestamps, build sorted unique date list, format them
   const tsRaw = new Set();
   useActive.forEach(d => {
     const src = (d.prices || []).filter(([ts]) => ts >= cutoff);
