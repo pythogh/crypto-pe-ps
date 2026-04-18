@@ -567,7 +567,16 @@ function renderTable() {
 
       tr.insertAdjacentElement('afterend', detailRow);
       // Small delay ensures the row is visible before Chart.js measures canvas
-      setTimeout(() => buildCoinDetailChart(d, canvasId), 60);
+      // ResizeObserver fires when canvas has real dimensions
+      const canvasEl = detailRow.querySelector('canvas');
+      if (canvasEl) {
+        const obs = new ResizeObserver(() => {
+          if (canvasEl.offsetWidth > 0) { obs.disconnect(); buildCoinDetailChart(d, canvasId); }
+        });
+        obs.observe(canvasEl);
+      } else {
+        setTimeout(() => buildCoinDetailChart(d, canvasId), 150);
+      }
     });
     tbody.appendChild(tr);
   });
