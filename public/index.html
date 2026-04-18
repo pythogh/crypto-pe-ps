@@ -33,7 +33,7 @@
 
     header {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 0 14px;
+      padding: 20px 0 18px;
       border-bottom: var(--border);
       background: var(--cream);
       position: sticky; top: 0; z-index: 100;
@@ -45,9 +45,9 @@
 
     /* ── Tabs ── */
     .tabs {
-      display: flex; gap: 0; margin-bottom: 24px;
+      display: flex; gap: 0; margin-bottom: 0;
       border-bottom: var(--border);
-      position: sticky; top: 57px; z-index: 99;
+      position: sticky; top: 67px; z-index: 99;
       background: var(--cream);
     }
     .tab-btn {
@@ -64,7 +64,7 @@
     }
 
     .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
+    .tab-pane.active { display: block; padding-top: 0; }
 
     /* ── Toolbar ── */
     .toolbar {
@@ -94,7 +94,7 @@
       font-family: var(--mono); font-size: 10px; text-transform: uppercase;
       letter-spacing: .07em; color: var(--sienna); padding: 18px 10px 12px;
       text-align: right; border-bottom: var(--border); font-weight: 400; white-space: nowrap;
-      position: sticky; top: 113px; background: var(--cream); z-index: 98;
+      position: sticky; top: 160px; background: var(--cream); z-index: 97;
     }
     thead th:first-child { text-align: left; }
     thead th.sortable { cursor: pointer; user-select: none; transition: color .15s; }
@@ -189,7 +189,7 @@
 
 <!-- ── TAB : Tableau ── -->
 <div class="tab-pane" id="tab-tableau">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+  <div style="position:sticky;top:108px;z-index:98;background:var(--cream);padding:12px 0 10px;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;border-bottom:var(--border)">
     <div style="font-family:var(--mono);font-size:10px;color:var(--sienna)">Rev. ann. = Rev. 30d × 12</div>
     <div style="display:flex;gap:10px;font-family:var(--mono);font-size:9px;color:var(--sand)">
       <span>P/E :</span>
@@ -222,13 +222,9 @@
 <!-- ── TAB : Comparatif ── -->
 <div class="tab-pane active" id="tab-compare">
 
-  <!-- Controls row -->
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:20px;flex-wrap:wrap">
-    <div style="display:flex;flex-direction:column;gap:10px">
-
-      <div class="coin-selector" id="coin-selector"></div>
-    </div>
-
+  <!-- Sticky coin selector -->
+  <div style="position:sticky;top:108px;z-index:98;background:var(--cream);padding:14px 0 12px;border-bottom:var(--border);margin-bottom:20px">
+    <div class="coin-selector" id="coin-selector"></div>
   </div>
 
   <!-- Two charts -->
