@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>multiples.xyz</title>
+  <title>token.pe</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
@@ -112,21 +112,9 @@
     .fdv-val { color: var(--green);  font-weight: 500; }
 
     /* ── COMPARE TAB ── */
-    .compare-controls {
-      display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;
-    }
-    .compare-row {
-      display: flex; align-items: center; gap: 0;
-    }
-    .compare-row-lbl { display: none; }
-    .metric-selector { display: flex; gap: 6px; }
-    .metric-btn {
-      font-family: var(--mono); font-size: 10px; padding: 5px 12px;
-      border: var(--border); border-radius: 4px; background: transparent;
-      color: var(--sienna); cursor: pointer; transition: all .15s;
-    }
-    .metric-btn:hover  { background: var(--cream2); }
-    .metric-btn.active { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+
+
+
 
     .coin-selector {
       display: flex; flex-wrap: wrap; gap: 6px;
@@ -165,7 +153,7 @@
 <body>
 
 <header>
-  <div class="logo">crypto<em>.</em>pe</div>
+  <div class="logo">token<em>.</em>pe</div>
   <div id="updated"><span style="color:var(--sienna)">Last update</span> <span id="update-time">—</span></div>
 </header>
 
@@ -268,7 +256,7 @@
 
 </div>
 
-<footer>Data : CoinGecko · DefiLlama — for informational purposes only</footer>
+<footer>Data: CoinGecko · DefiLlama — for informational purposes only</footer>
 
 <script>
 const COINS = [
@@ -340,7 +328,6 @@ let selectedCoins   = new Set();
 let compareChartRev   = null;
 let compareChartPE    = null;
 let compareChartDaily = null;
-let coinDetailChart   = null;
 let selectedCoinIdx   = null;
 
 function buildCoinDetailChart(d, canvasId) {
@@ -635,15 +622,6 @@ function buildCoinSelector() {
 function getMetricSeries(d, metric, days) {
   const cutoff = Date.now() - days * 86400000;
 
-  if (metric === 'price') {
-    if (!d.prices?.length) return { labels: [], data: [] };
-    const src = d.prices.filter(([ts]) => ts >= cutoff);
-    const use = src.length >= 2 ? src : d.prices.slice(-Math.min(days, d.prices.length));
-    return {
-      labels: use.map(([ts]) => new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' })),
-      data:   use.map(([, p]) => p),
-    };
-  }
 
   if (metric === 'rev30d') {
     if (!d.rev?.history?.length) return { labels: [], data: [] };
@@ -970,22 +948,14 @@ async function init() {
   const loadEl = document.getElementById('loading');
   try {
     // Show progress during fetch
-    const bar = document.getElementById('loading-bar');
-    const txt = document.getElementById('loading-text');
-    let pct = 0;
-    const progress = setInterval(() => {
-      pct = Math.min(pct + 2, 85);
-      if (bar) bar.style.width = pct + '%';
-      if (txt) txt.textContent = `Fetching data… (${COINS.length} coins, ~${Math.ceil((100-pct)/2)}s)`;
-    }, 300);
+
 
     const res = await fetch('/api/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(COINS),
     });
-    clearInterval(progress);
-    if (bar) bar.style.width = '100%';
+
     if (!res.ok) throw new Error('Server HTTP ' + res.status);
     const data = await res.json();
 
